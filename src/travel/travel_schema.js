@@ -1,9 +1,6 @@
-
-// travel.js
-
 const mongoose = require('mongoose');
 
-const diarySchema = mongoose.Schema({
+const travelSchema = mongoose.Schema({
     title: {
        type: String,
        maxlength: 100
@@ -16,20 +13,16 @@ const diarySchema = mongoose.Schema({
        type: Date,
        required: true
     },
-    location: Array(
-        {langitube: Double},
-        {latitude: Double,}
-    ),
-    content: {
-       type: String,
-       maxlength: 5000 // 예시로 5000자로 제한
-    },
+    location: {
+      latitude: Number,
+      longitude: Number,
+   },
     invited: {
        type: [mongoose.Schema.Types.ObjectId],
        ref: 'User' // User 모델과 연결
     },
 }, { versionKey: false });
 
-export const Travel = mongoose.model('Travel', diarySchema);
+const Travel = mongoose.model('Travel', travelSchema);
 
 module.exports = { Travel };
