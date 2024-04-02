@@ -44,26 +44,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/:travelid', async (req, res) => {
-  console.log("특정 여행 조회 요청");
-  try {
-    const travel = await Travel.findById(req.params.travelid);
-
-    if (travel) { // 특정 여행을 찾았는지 확인
-      return res.status(200).json({
-        success: true,
-        travel,
-      });
-    } else {
-      console.log('해당 여행을 찾을 수 없습니다.');
-      return res.status(404).json({ success: false, message: '해당 여행을 찾을 수 없습니다.' });
-    }
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ success: false, message: '서버 오류' });
-  }
-});
-
 
 router.post('/', async (req, res) => {
   console.log("여행 생성 요청");
@@ -96,10 +76,10 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.post('/:id/invite', async (req, res) => {
+router.put('/:travelid/invite', async (req, res) => {
   console.log("여행 초대 요청");
   try {
-    const travel = await Travel.findById(req.params.id);
+    const travel = await Travel.findById(req.params.travelid);
     if (travel) {
       console.log('여행 ID:', travel._id);
 
