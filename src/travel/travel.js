@@ -4,6 +4,26 @@ const router = express.Router();
 const { User } = require('../user/user_schema');
 const { Travel } = require('./travel_schema');
 
+router.get('/', async (req, res) => {
+  console.log("여행 목록 요청");
+  try {
+    const travels = await Travel.find({ invited: req.body.userId });
+    if (travels.length > 0) { // 여행 목록이 비어있지 않은지 확인
+      return res.status(200).json({
+        success: true,
+        travels,
+      });
+    } else {
+      console.log('해당 사용자의 여행 목록을 찾을 수 없습니다.');
+      return res.status(404).json({ success: false, message: '해당 사용자의 여행 목록을 찾을 수 없습니다.' });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+
 router.post('/', async (req, res) => {
   console.log("여행 생성 요청");
   try {
