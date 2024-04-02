@@ -24,19 +24,19 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.get('/', async (req, res) => {
-  console.log("여행 목록 요청");
+router.get('/:travelid', async (req, res) => {
+  console.log("특정 여행 조회 요청");
   try {
-    const usertravels = await Travel.find({ invited: req.body.userId });
+    const travel = await Travel.findById(req.params.travelid);
 
-    if (usertravels.length > 0) { // 사용자의 여행 목록이 비어있지 않은지 확인
+    if (travel) { // 특정 여행을 찾았는지 확인
       return res.status(200).json({
         success: true,
-        travels: usertravels,
+        travel,
       });
     } else {
-      console.log('해당 사용자의 여행 목록을 찾을 수 없습니다.');
-      return res.status(404).json({ success: false, message: '해당 사용자의 여행 목록을 찾을 수 없습니다.' });
+      console.log('해당 여행을 찾을 수 없습니다.');
+      return res.status(404).json({ success: false, message: '해당 여행을 찾을 수 없습니다.' });
     }
   } catch (err) {
     console.error(err);
