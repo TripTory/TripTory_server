@@ -3,6 +3,7 @@ const router = express.Router();
 
 const { User } = require('../user/user_schema');
 const { Travel } = require('./travel_schema');
+const { deleteModel } = require('mongoose');
 
 router.get('/', async (req, res) => {
   console.log("여행 목록 요청");
@@ -104,7 +105,7 @@ router.put('/:travelid/invite', async (req, res) => {
         return res.status(404).json({ success: false, message: '초대할 사용자를 찾을 수 없습니다.' });
       }
     } else {
-      console.log('여행을 찾을 수 없습니다.');
+      console.log('해당 여행을 찾을 수 없습니다.');
       return res.status(404).json({ success: false, message: '여행을 찾을 수 없습니다.'});
     }
   } catch (err) {
@@ -113,5 +114,29 @@ router.put('/:travelid/invite', async (req, res) => {
   }
 });
 
+
+router.delete('/:travelid', async (req, res) => {
+  console.log('여행 삭제 요청');
+  try{
+    const travel = await Travel.findById(req.params.travelid);
+
+    if(travel){
+      console.log('삭제할 여행 ID', travel._id);
+
+      await travel.remove();
+
+      return res.status(200).json({
+        success: true,
+        message: '여행 삭제 완료'
+      });
+    } else {
+      console.log('해당 여행을 찾을 수 없습니다.');
+      return res.status(404).json({ success : false, message : '해당 여행을 찾을 수 없습니다.' });
+    }
+  } catch(error) {
+    console.error(err);
+    return res.status(500).json({ success : false, message : '서버 오류' });
+  }
+})
 
 module.exports = router;
