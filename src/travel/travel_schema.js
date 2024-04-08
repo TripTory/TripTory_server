@@ -21,6 +21,10 @@ const travelSchema = mongoose.Schema({
        type: [mongoose.Schema.Types.ObjectId],
        ref: 'User' // User 모델과 연결
     },
+    ivtoken: {
+      type: String,
+      require: true
+    }
 }, { versionKey: false });
 
 const Travel = mongoose.model('Travel', travelSchema);
