@@ -114,6 +114,47 @@ router.put('/:travelid/invite', async (req, res) => {
   }
 });
 
+router.put('/:travelid', async (req, res) => {
+  console.log('여행 수정 요청');
+  try {
+    const travel = await Travel.findById(req.params.travelid);
+    if(travel){
+      console.log('수정할 여행 ID:', travel._id);
+
+      const user = await User.findById(req.body.userId);
+      if (!travel.invited.includes(user._id)) {
+        console.log('여행에 대한 권한이 없습니다.');
+        return res.status(400).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
+      }
+
+      const updatetravel = await Travel.findByIdAndUpdate(req.params.travelid, {
+        title: req.body.title,
+        startdate: req.body.startdate,
+        enddate: req.body.enddate,
+        location: req.body.location,
+        invited: [user._id] // 초대된 사용자 배열에 현재 사용자 추가
+      }, {new: true} );
+
+      if (updatetravel) {
+        console.log('여행 수정 완료');
+        return res.status(200).json({
+          success: true,
+          travel: updatetravel
+        });
+      } else {
+        console.log('여행 수정 실패');
+        return res.status(400).json({ success : false, message : '여행 수정 실패'});
+      }
+
+    } else {
+      console.log('해당 여행을 찾을 수 없습니다.');
+      return res.status(404).json({ success : false, message : '해당 여행을 찾을 수 없습니다.' });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
 
 router.delete('/:travelid', async (req, res) => {
   console.log('여행 삭제 요청');
