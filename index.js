@@ -20,7 +20,7 @@ app.use(cors());
 // connect mongoose
 const mongoose = require('mongoose');
 
-mongoose.connect(
+const MongoConnect = async () => await mongoose.connect(
     process.env.MONGODB_URI,
     {
         // useNewUrlPaser: true,
@@ -29,7 +29,7 @@ mongoose.connect(
         // useFindAndModify: false,
     }
 )
-.then(() => console.log('MongoDB connected'))
+MongoConnect().then(() => console.log('MongoDB connected'))
 .catch((err) => {
     console.log(err);
 });
