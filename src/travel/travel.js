@@ -49,7 +49,7 @@ router.get('/:travelid', async (req, res) => {
 router.post('/', async (req, res) => {
   console.log("여행 생성 요청");
   try {
-    const user = await User.findById(req.body.author);
+    const user = await User.findById(req.body.userId);
     if (user) {
       console.log('사용자 ID:', user._id);
 
@@ -162,7 +162,7 @@ router.delete('/:travelid', async (req, res) => {
     const travel = await Travel.findById(req.params.travelid);
 
     if(travel){
-      console.log('삭제할 여행 ID', travel._id);
+      console.log('삭제할 여행 ID:', travel._id);
 
       await Travel.findByIdAndDelete(travel._id);
 
