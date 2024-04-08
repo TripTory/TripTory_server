@@ -4,7 +4,6 @@ const crypto = require('crypto');
 
 const { User } = require('../user/user_schema');
 const { Travel } = require('./travel_schema');
-const { deleteModel } = require('mongoose');
 
 router.get('/', async (req, res) => {
   console.log("여행 목록 요청");
