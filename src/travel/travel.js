@@ -123,7 +123,7 @@ router.delete('/:travelid', async (req, res) => {
     if(travel){
       console.log('삭제할 여행 ID', travel._id);
 
-      await travel.remove();
+      await Travel.findByIdAndDelete(travel._id);
 
       return res.status(200).json({
         success: true,
@@ -133,10 +133,11 @@ router.delete('/:travelid', async (req, res) => {
       console.log('해당 여행을 찾을 수 없습니다.');
       return res.status(404).json({ success : false, message : '해당 여행을 찾을 수 없습니다.' });
     }
-  } catch(error) {
+  } catch(err) {
     console.error(err);
     return res.status(500).json({ success : false, message : '서버 오류' });
   }
 })
+
 
 module.exports = router;
