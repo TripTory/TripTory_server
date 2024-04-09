@@ -130,8 +130,8 @@ router.get('/', async(req, res) => {
   }
 });
 
-router.get('/:travelId', async(req, res) => {
-  console.log('여행별 일기 목록 요청');
+router.get('/travel/:travelId', async(req, res) => {
+  console.log('일기 목록 요청');
   try {
     const diarys = await Diary.find({ travel: req.params.travelId });
 
@@ -147,6 +147,26 @@ router.get('/:travelId', async(req, res) => {
   } catch (err) {
     console.log(err);
     return res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+router.get('/:diaryId', async(req, res) => {
+  console.log('특정 일기 조회 요청');
+  try {
+    const diary = await Diary.findById(req.params.diaryId);
+
+    if(diary){
+      return res.status(200).json({
+        success: true,
+        diary
+      });
+    } else {
+      console.log('해당 일기를 찾을 수 없습니다.');
+      return res.status(404).json({ success: false, message: '해당 일기를 찾을 수 없습니다.' });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: '해당 일기를 찾을 수 없습니다.' });
   }
 });
 
