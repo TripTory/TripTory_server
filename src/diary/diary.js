@@ -44,4 +44,36 @@ router.post('/', async (req, res) => {
   }
 });
 
+router.delete('/:diaryId', async(req, res) => {
+  console.log('일기 삭제 요청');
+  try {
+    const diary = await Diary.findById(req.params.diaryId);
+
+    if(diary){
+      console.log('삭제할 여행 ID:', diary._id);
+
+      if (diary.userId != req.body.userId) {
+        console.log('일기에 대한 권한이 없습니다.');
+        return res.status(400).json({ success: false, message: '일기에 대한 권한이 없습니다.' });
+      }
+
+      await Diary.findByIdAndDelete(diary._id);
+
+      return res.status(200).json({
+        success: true,
+        message: '여행 삭제 완료'
+      });
+
+    } else {
+      console.log('일기를 찾을 수 없습니다.');
+      return res.status(400).json({ success: false, message: '일기를 찾을 수 없습니다.'});
+    }
+  } catch(err){
+    console.error(err);
+    return res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+
+
 module.exports = router;
