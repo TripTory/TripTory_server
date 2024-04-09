@@ -131,7 +131,7 @@ router.get('/', async(req, res) => {
 });
 
 router.get('/travel/:travelId', async(req, res) => {
-  console.log('일기 목록 요청');
+  console.log('여행별 일기 목록 요청');
   try {
     const diarys = await Diary.find({ travel: req.params.travelId });
 
