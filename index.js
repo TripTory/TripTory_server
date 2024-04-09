@@ -40,6 +40,9 @@ app.get('/', function (req, res) {
 
 const travelAPI = require("./src/travel/travel");
 app.use('/travel', travelAPI);
+
+const diaryAPI = require("./src/diary/diary");
+app.use('/diary', diaryAPI);
   
 app.listen(port, () => console.log(`${port}포트입니다.`));
   
