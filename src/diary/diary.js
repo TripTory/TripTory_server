@@ -110,5 +110,26 @@ router.put('/:diaryId', async(req,res) => {
   }
 });
 
+router.get('/', async(req, res) => {
+  console.log('일기 목록 요청');
+  try {
+    const diarys = await Diary.find({ userId: req.body.userId });
+
+    if(diarys.length > 0){
+      return res.status(200).json({
+        success: true,
+        diarys
+      });
+    } else {
+      console.log('해당 사용자의 일기 목록을 찾을 수 없습니다.');
+      return res.status(404).json({ success: false, message: '해당 사용자의 일기 목록을 찾을 수 없습니다.' });
+    }
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+
 
 module.exports = router;
