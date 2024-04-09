@@ -74,6 +74,41 @@ router.delete('/:diaryId', async(req, res) => {
   }
 });
 
+router.put('/:diaryId', async(req,res) => {
+  console.log('일기 수정 요청');
+  try {
+    const diary = await Diary.findById(req.params.diaryId);
+    if(diary) {
+      console.log('수정할 여ᅙᅢᆼ ID:', diary._id);
+
+      if(diary.userId != req.body.userId){
+        console.log('일기에 대한 권한이 없습니다.');
+        return res.status(400).json({ success: false, message: '일기에 대한 권한이 없습니다.' });
+      }
+      
+      const updatediary = await Diary.findByIdAndUpdate(req.params.diaryId, {
+        title: req.body.title,
+        content: req.body.content,
+        location: req.body.location,
+        date: req.body.date
+      }, { new: true });
+
+      if(updatediary){
+        console.log('일기 수정 완료');
+        return res.status(200).json({ success: true, message: '일기 수정 완료' });
+      } else {
+        console.log('일기 수정 실패');
+        return res.status(400).json({ success: false, message: '일기 수정 실패'});
+      }
+    } else {
+      console.log('해당 일기를 찾을 수 없습니다.');
+      return res.status(404).json({ success: false, message: '해당 일기를 찾을 수 없습니다.' });
+    }
+  } catch(err) {
+    console.log(err);
+    return res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
 
 
 module.exports = router;
