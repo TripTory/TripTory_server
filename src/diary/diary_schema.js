@@ -13,9 +13,9 @@ const diarySchema = mongoose.Schema({
       latitude: Number,
       longitude: Number,
     },
-    createdAt: {
+    date: {
         type: Date,
-        default: Date.now
+        required: true
     },
     travel: {
         type: mongoose.Schema.ObjectId,

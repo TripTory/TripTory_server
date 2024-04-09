@@ -14,11 +14,12 @@ router.post('/', async (req, res) => {
         console.log('여행 ID:', travel._id);
         if (user) {
             console.log('사용자 ID:', user._id);
-      
+
             const diary = new Diary({
               title: req.body.title,
               content: req.body.content,
               location: req.body.location,
+              date: req.body.date,
               travel: [user._id],
               userId: [travel._id]
             });
