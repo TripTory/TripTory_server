@@ -20,8 +20,8 @@ router.post('/', async (req, res) => {
               content: req.body.content,
               location: req.body.location,
               date: req.body.date,
-              travel: [user._id],
-              userId: [travel._id]
+              travel: [travel._id],
+              userId: [user._id]
             });
       
             const savedDiary = await diary.save(); // 여행 객체 저장
