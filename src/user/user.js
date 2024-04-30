@@ -63,7 +63,29 @@ router.put('/', async (req, res) => {
 });
 
 
+router.delete('/', async (req, res) => {
+    console.log('사용자 정보 삭제 요청');
+    try{
+        const user = await User.findById(req.body.userId);
 
+        if(user){
+        console.log('삭제할 사용자 ID:', user._id);
+
+        await User.findByIdAndDelete(user._id);
+
+        return res.status(200).json({
+            success: true,
+            message: '사용자 정보 삭제 완료'
+        });
+        } else {
+        console.log('사용자를 찾을 수 없습니다.');
+        return res.status(404).json({ success : false, message : '사용자를 찾을 수 없습니다.' });
+        }
+    } catch(err) {
+        console.error(err);
+        return res.status(500).json({ success : false, message : '서버 오류' });
+    }
+})
   
 
 
