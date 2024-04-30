@@ -2,6 +2,8 @@
 const express = require("express"); 
 const cors = require("cors");
 const axios = require('axios');
+const cookieParser = require('cookie-parser'); // 쿠키 파서 미들웨어 추가
+const session = require('express-session'); // 세션 미들웨어 추가
 
 const dotenv = require("dotenv"); // .env 파일 사용 라이브러리
 require('dotenv').config();
@@ -13,6 +15,16 @@ const port = process.env.PORT;
 
 app.use(express.json());
 app.use(cors());
+
+
+// 쿠키 파서와 세션 미들웨어 사용 설정
+app.use(cookieParser());
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'default-secret-key',
+  resave: false,
+  saveUninitialized: false
+}));
+
 
 // connect mongoose
 const mongoose = require('mongoose');
