@@ -41,6 +41,9 @@ app.use('/travel', travelAPI);
 const diaryAPI = require("./src/diary/diary");
 app.use('/diary', diaryAPI);
 
+const userAPI = require("./src/user/user");
+app.use('/user', userAPI);
+
 const oauthAPI = require("./src/oauth");
 app.use('/oauth', oauthAPI);
   
