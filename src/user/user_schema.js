@@ -10,12 +10,14 @@ const userSchema = mongoose.Schema({
        trim: true,
        unique: 1
    },
-   password: {
+   oauthId: {
        type: String,
-       maxlength: 50
+       trim: true,
+       unique: 1
    }
 }, {versionKey: false});
 
 const User = mongoose.model('User', userSchema); // userSchema를 model로 만들어준다.
 
 module.exports = { User };
+
