@@ -47,7 +47,7 @@ router.get('/callback', async (req, res) => {
       const naveruserData = naveruser.data.response;
 
       // 데이터베이스에서 사용자 정보 조회
-      let user = await User.findOne({ naverId: naveruserData.id });
+      let user = await User.findOne({ oauthId: naveruserData.id });
 
       // 새로운 사용자인지 확인
       if (!user) {
