@@ -3,9 +3,6 @@ const express = require("express");
 const cors = require("cors");
 const axios = require('axios');
 
-const bodyParser = require("body-parser"); // body-parser 라이브러리 사용
-
-
 const dotenv = require("dotenv"); // .env 파일 사용 라이브러리
 require('dotenv').config();
 
@@ -43,6 +40,9 @@ app.use('/travel', travelAPI);
 
 const diaryAPI = require("./src/diary/diary");
 app.use('/diary', diaryAPI);
+
+const oauthAPI = require("./src/oauth");
+app.use('/oauth', oauthAPI);
   
 app.listen(port, () => console.log(`${port}포트입니다.`));
   
