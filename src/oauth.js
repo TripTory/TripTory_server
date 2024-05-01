@@ -9,5 +9,8 @@ require('dotenv').config();
 const naverAPI = require('./login/naver');
 router.use('/naver', naverAPI);
 
+const googleAPI = require('./login/google');
+router.use('/google', googleAPI);
+
 
 module.exports = router;
