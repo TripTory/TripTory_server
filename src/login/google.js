@@ -55,7 +55,8 @@ router.get('/callback', async (req, res) => {
             user = new User({
                 oauthId: googleUserData.id,
                 name: googleUserData.name,
-                email: googleUserData.email
+                email: googleUserData.email,
+                oauthAccessToken: accessToken
                 // 다른 사용자 정보 필드 추가 가능
             });
 
@@ -64,6 +65,11 @@ router.get('/callback', async (req, res) => {
             res.json({ message: '회원가입 성공', email: googleUserData.email });
 
         } else {
+
+            await User.findByIdAndUpdate(user._id, {
+                oauthAccessToken: accessToken
+            }, {new: true} );
+            
             // 기존 사용자인 경우 로그인 메시지 응답
             res.json({ message: '로그인 성공', email: googleUserData.email });
         }

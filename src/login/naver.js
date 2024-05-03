@@ -14,6 +14,7 @@ router.get('/', async(req, res) => {
   res.redirect(oauthUrl);
 });
 
+
 // 콜백 처리
 router.get('/callback', async (req, res) => {
   const { code, state } = req.query;
@@ -56,7 +57,8 @@ router.get('/callback', async (req, res) => {
         user = new User({
           oauthId: naveruserData.id,
           name: naveruserData.name,
-          email: naveruserData.email
+          email: naveruserData.email,
+          oauthAccessToken: accessToken
           // 다른 사용자 정보 필드 추가 가능
         });
 
@@ -70,6 +72,10 @@ router.get('/callback', async (req, res) => {
         // 기존 사용자인 경우 로그인 메시지 응답
         req.session.userId = user._id; 
         res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000 }); // 세션에 쿠키 저장, 유효기간 1일
+
+        await User.findByIdAndUpdate(user._id, {
+            oauthAccessToken: accessToken
+        }, {new: true} );
 
         res.json({ message: '로그인 성공', email: naveruserData.email });
       }
