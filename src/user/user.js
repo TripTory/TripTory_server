@@ -38,6 +38,30 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/logout', async (req, res) => {
+    console.log('로그아웃 요청');
+    try {
+      if (req.session && req.session.userId){
+        req.session.destroy(err => {
+            if (err) {
+              console.error('세션 제거 실패:', err);
+              res.status(500).send('세션 제거 실패');
+            } else {
+              console.log('로그아웃 성공');
+              res.clearCookie('userSession'); // 쿠키도 제거합니다.
+              res.status(200).send('로그아웃 성공');
+            }
+          });
+      } else {
+        console.log('로그인이 필요합니다.');
+        return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ success: false, message: '서버 오류' });
+    }
+})
+
 
 router.put('/', async (req, res) => {
     console.log('사용자 정보 수정 요청');
