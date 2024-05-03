@@ -38,6 +38,30 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/logout', async (req, res) => {
+    console.log('로그아웃 요청');
+    try {
+      if (req.session && req.session.userId){
+        req.session.destroy(err => {
+            if (err) {
+              console.error('세션 제거 실패:', err);
+              res.status(500).send('세션 제거 실패');
+            } else {
+              console.log('로그아웃 성공');
+              res.clearCookie('userSession'); // 쿠키도 제거합니다.
+              res.status(200).send('로그아웃 성공');
+            }
+          });
+      } else {
+        console.log('로그인이 필요합니다.');
+        return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+      }
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ success: false, message: '서버 오류' });
+    }
+})
+
 
 router.put('/', async (req, res) => {
     console.log('사용자 정보 수정 요청');
@@ -88,10 +112,23 @@ router.delete('/', async (req, res) => {
                 console.log('삭제할 사용자 ID:', user._id);
         
                 await User.findByIdAndDelete(user._id);
+
+                // 네이버 OAuth 인증 해제 요청
+                await revokeNaverAccessToken(user.oauthAccessToken);
         
-                return res.status(200).json({
-                    success: true,
-                    message: '사용자 정보 삭제 완료'
+                // 세션 및 쿠키 삭제
+                req.session.destroy(err => {
+                    if (err) {
+                        console.error('세션 제거 실패:', err);
+                        return res.status(500).send('세션 제거 실패');
+                    } else {
+                        console.log('로그아웃 및 사용자 정보 삭제 완료');
+                        res.clearCookie('userSession');
+                        return res.status(200).json({
+                            success: true,
+                            message: '로그아웃 및 사용자 정보 삭제 완료'
+                        });
+                    }
                 });
             } else {
                 console.log('사용자를 찾을 수 없습니다.');
@@ -107,6 +144,25 @@ router.delete('/', async (req, res) => {
     }
 })
   
+// 네이버 OAuth 인증 해제 요청
+async function revokeNaverAccessToken(accessToken) {
+    const oauthUrl = 'https://nid.naver.com/oauth2.0/token';
+    const params = {
+        client_id: process.env.NAVER_ID,
+        client_secret: process.env.NAVER_SECRET,
+        grant_type: 'delete',
+        access_token: accessToken,
+        service_provider: 'NAVER',
+    };
+
+    try {
+        const response = await axios.get(oauthUrl, { params });
+        console.log('네이버 OAuth 인증 해제 요청 성공:', response.data);
+    } catch (error) {
+        console.error('네이버 OAuth 인증 해제 요청 실패:', error.response.data);
+        throw error; // 오류를 호출자에게 다시 전달
+    }
+}
 
 
 module.exports = router;

@@ -14,6 +14,11 @@ const userSchema = mongoose.Schema({
        type: String,
        trim: true,
        unique: 1
+   },
+   oauthAccessToken: {
+        type: String,
+        trim: true,
+        unique: 1
    }
 }, {versionKey: false});
 
