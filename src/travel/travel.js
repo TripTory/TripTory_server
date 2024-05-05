@@ -12,17 +12,14 @@ router.get('/', async (req, res) => {
       const travels = await Travel.find({ invited: req.session.userId });
 
       if (travels.length > 0) { // 여행 목록이 비어있지 않은지 확인
-        return res.status(200).json({
-          success: true,
-          travels,
-        });
+        return res.status(200).json({ success: true, travels });
       } else {
         console.log('해당 사용자의 여행 목록을 찾을 수 없습니다.');
         return res.status(404).json({ success: false, message: '해당 사용자의 여행 목록을 찾을 수 없습니다.' });
       }
     } else {
       console.log('로그인이 필요합니다.');
-      return res.status(400).json ({ success: false, message: '로그인이 필요합니다.' });
+      return res.status(401).json ({ success: false, message: '로그인이 필요합니다.' });
     }
   } catch (err) {
     console.error(err);
@@ -88,7 +85,7 @@ router.post('/', async (req, res) => {
       }
     } else {
       console.log('로그인이 필요합니다.');
-      return res.status(400).json({ success: false, message: '로그인이 필요합니다.' });
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
     }
   } catch (err) {
     console.error(err);
@@ -134,7 +131,7 @@ router.put('/:travelid/invite', async (req, res) => {
       }
     } else {
       console.log('로그인이 필요합니다.');
-      return res.status(400).json({ success: false, message: '로그인이 필요합니다.' });  
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });  
     }
   } catch (err) {
     console.error(err);
@@ -153,7 +150,7 @@ router.put('/:travelid', async (req, res) => {
         const user = await User.findById(req.session.userId);
         if (!travel.invited.includes(user._id)) {
           console.log('여행에 대한 권한이 없습니다.');
-          return res.status(400).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
+          return res.status(403).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
         }
   
         const updatetravel = await Travel.findByIdAndUpdate(req.params.travelid, {
@@ -163,17 +160,9 @@ router.put('/:travelid', async (req, res) => {
           location: req.body.location,
           invited: [user._id] // 초대된 사용자 배열에 현재 사용자 추가
         }, {new: true} );
-  
-        if (updatetravel) {
-          console.log('여행 수정 완료');
-          return res.status(200).json({
-            success: true,
-            travel: updatetravel
-          });
-        } else {
-          console.log('여행 수정 실패');
-          return res.status(400).json({ success : false, message : '여행 수정 실패'});
-        }
+        
+        console.log('여행 수정 완료');
+        return res.status(200).json({ success: true, travel: updatetravel });
   
       } else {
         console.log('해당 여행을 찾을 수 없습니다.');
@@ -181,7 +170,7 @@ router.put('/:travelid', async (req, res) => {
       }
     } else {
       console.log('로그인이 필요합니다.');
-      return res.status(400).json({ success: false, message: '로그인이 필요합니다.' });
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
     }
   } catch (err) {
     console.error(err);
@@ -200,17 +189,16 @@ router.delete('/:travelid', async (req, res) => {
   
         await Travel.findByIdAndDelete(travel._id);
   
-        return res.status(200).json({
-          success: true,
-          message: '여행 삭제 완료'
-        });
+        console.log('여행 삭제 완료');
+        return res.status(200).json({ success: true, message: '여행 삭제 완료'});
+
       } else {
         console.log('해당 여행을 찾을 수 없습니다.');
         return res.status(404).json({ success : false, message : '해당 여행을 찾을 수 없습니다.' });
       }
     } else {
       console.log('로그인이 필요합니다.');
-      return res.status(400).json({ success: false, message: '로그인이 필요합니다.' });
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
     }
   } catch(err) {
     console.error(err);
