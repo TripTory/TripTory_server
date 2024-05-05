@@ -177,12 +177,24 @@ router.delete('/:travelid', async (req, res) => {
   try{
     if (req.session && req.session.userId){
       const travel = await Travel.findById(req.params.travelid);
-      
+
       if(travel){
         console.log('삭제할 여행 ID:', travel._id);
-  
-        await Travel.findByIdAndDelete(travel._id);
-  
+
+        const user = await User.findById(req.session.userId);
+        if (!travel.invited.includes(user._id)) {
+          console.log('여행에 대한 권한이 없습니다.');
+          return res.status(403).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
+        }
+
+        travel.invited = travel.invited.filter(userId => userId.toString() !== user._id.toString());
+        console.log(travel.invited);
+        await travel.save();
+      
+        if (travel.invited.length === 0) {
+          await Travel.findByIdAndDelete(travel._id);
+        }
+      
         console.log('여행 삭제 완료');
         return res.status(200).json({ success: true, message: '여행 삭제 완료'});
 
