@@ -93,41 +93,35 @@ router.post('/', async (req, res) => {
   }
 });
 
-router.put('/:travelid/invite', async (req, res) => {
+router.put('/invite', async (req, res) => {
   console.log("여행 초대 요청");
   try {
     if (req.session && req.session.userId){
       const user = await User.findById(req.session.userId);
-      const travel = await Travel.findById(req.params.travelid);
+      const travel = await Travel.findOne({ ivtoken: req.body.ivtoken }); // 여행 토큰으로 여행을 검색
       if (travel) {
         console.log('여행 ID:', travel._id);
-        if(req.body.ivtoken == travel.ivtoken) {
-          if (user) {
-            console.log('초대할 사용자 ID:', user._id);
-    
-            if (travel.invited.includes(user._id)) {
-              console.log('이미 초대된 사용자입니다.');
-              return res.status(400).json({ success: false, message: '이미 초대된 사용자입니다.' });
-            }
-    
-            travel.invited.push(user._id); // 초대된 사용자 배열에 추가
-            const savedTravel = await travel.save(); // 여행 객체 저장
-    
-            return res.status(200).json({
-              success: true,
-              travelInfo: savedTravel,
-            });
-          } else {
-            console.log('초대할 사용자를 찾을 수 없습니다.');
-            return res.status(404).json({ success: false, message: '초대할 사용자를 찾을 수 없습니다.' });
+        if (user) {
+          console.log('초대할 사용자 ID:', user._id);
+  
+          if (travel.invited.includes(user._id)) {
+            console.log('이미 초대된 사용자입니다.');
+            return res.status(400).json({ success: false, message: '이미 초대된 사용자입니다.' });
           }
+  
+          travel.invited.push(user._id); // 초대된 사용자 배열에 추가
+          await travel.save(); // 여행 객체 저장
+  
+          console.log('사용자 초대 완료');
+          return res.status(200).json({ success: true, message: '사용자 초대 완료' });
+
         } else {
-          console.log('토큰이 올바르지 않습니다.');
-          return res.status(400).json({ success: false, message: '토큰이 올바르지 않습니다.' });
-        } 
+          console.log('초대할 사용자를 찾을 수 없습니다.');
+          return res.status(404).json({ success: false, message: '초대할 사용자를 찾을 수 없습니다.' });
+        }
       } else {
-        console.log('해당 여행을 찾을 수 없습니다.');
-        return res.status(404).json({ success: false, message: '여행을 찾을 수 없습니다.'});
+        console.log('일차하는 여행을 찾을 수 없습니다.');
+        return res.status(404).json({ success: false, message: '일치하는 여행을 찾을 수 없습니다.'});
       }
     } else {
       console.log('로그인이 필요합니다.');
