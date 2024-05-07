@@ -10,6 +10,9 @@ const userSchema = mongoose.Schema({
        trim: true,
        unique: 1
    },
+   profileimg: {
+       type: String
+   },
    oauthId: {
        type: String,
        trim: true,
