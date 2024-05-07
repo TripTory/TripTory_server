@@ -81,8 +81,13 @@ router.get('/callback', async (req, res) => {
       }
 
     } catch (error) {
-      console.error('로그인 실패:', error);
-      res.status(500).send('로그인 실패');
+      if (error.code === 11000 && error.keyPattern.email) {
+        // 중복된 이메일 주소로 인한 오류
+        return res.status(400).json({ error: '중복된 이메일 주소입니다.' });
+      } else {
+        console.error('사용자 정보 요청 실패:', error);
+        res.status(500).send('사용자 정보 요청 실패');
+      }
     }
 
   } catch (error) {

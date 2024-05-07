@@ -40,7 +40,7 @@ router.get('/callback', async (req, res) => {
       const kakaoUserData = userInfoResponse.data;
 
       let user = await User.findOne({ oauthId: kakaoUserData.id });
-
+ 
       if (!user) {
         user = new User({
           oauthId: kakaoUserData.id,
@@ -55,7 +55,8 @@ router.get('/callback', async (req, res) => {
         res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000 });
 
         res.json({ message: '회원가입 성공', email: kakaoUserData.kakao_account.email });
-      } else {
+      }
+      else {
         req.session.userId = user._id;
         res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000 });
 
@@ -66,8 +67,13 @@ router.get('/callback', async (req, res) => {
         res.json({ message: '로그인 성공', email: kakaoUserData.kakao_account.email });
       }
     } catch (error) {
-      console.error('사용자 정보 요청 실패:', error);
-      res.status(500).send('사용자 정보 요청 실패');
+      if (error.code === 11000 && error.keyPattern.email) {
+        // 중복된 이메일 주소로 인한 오류
+        return res.status(400).json({ error: '중복된 이메일 주소입니다.' });
+      } else {
+        console.error('사용자 정보 요청 실패:', error);
+        res.status(500).send('사용자 정보 요청 실패');
+      }
     }
   } catch (error) {
     console.error('토큰 요청 실패:', error);
