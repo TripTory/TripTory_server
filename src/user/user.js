@@ -111,6 +111,9 @@ router.delete('/', async (req, res) => {
 
           // 네이버 OAuth 인증 해제 요청
           await revokeNaverAccessToken(user.oauthAccessToken);
+
+          // 카카오 계정 탈퇴 요청
+          await revokeKakaoAccessToken(user.oauthAccessToken);
     
           // 세션 및 쿠키 삭제
           req.session.destroy(err => {
@@ -153,6 +156,24 @@ async function revokeNaverAccessToken(accessToken) {
     console.log('네이버 OAuth 인증 해제 요청 성공:', response.data);
   } catch (error) {
     console.error('네이버 OAuth 인증 해제 요청 실패:', error.response.data);
+    throw error; // 오류를 호출자에게 다시 전달
+  }
+}
+
+// 카카오 OAuth 인증 해제 요청
+async function revokeKakaoAccessToken(accessToken) {
+  const oauthUrl = 'https://kauth.kakao.com/oauth/invalidate';
+  const params = {
+    client_id: process.env.KAKAO_ID,
+    client_secret: process.env.KAKAO_SECRET,
+    access_token: accessToken,
+  };
+
+  try {
+    const response = await axios.get(oauthUrl, { params });
+    console.log('카카오 OAuth 인증 해제 요청 성공:', response.data);
+  } catch (error) {
+    console.error('카카오 OAuth 인증 해제 요청 실패:', error.response.data);
     throw error; // 오류를 호출자에게 다시 전달
   }
 }
