@@ -9,5 +9,7 @@ router.use('/naver', naverAPI);
 const googleAPI = require('./login/google');
 router.use('/google', googleAPI);
 
+const kakaoAPI = require('./login/kakao');
+router.use('/kakao', kakaoAPI);
 
 module.exports = router;
