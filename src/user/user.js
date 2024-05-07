@@ -114,6 +114,9 @@ router.delete('/', async (req, res) => {
 
           // 카카오 계정 탈퇴 요청
           await revokeKakaoAccessToken(user.oauthAccessToken);
+
+          // 구글 OAuth 인증 해제 요청
+          await revokeGoogleAccessToken(user.googleAccessToken);
     
           // 세션 및 쿠키 삭제
           req.session.destroy(err => {
@@ -178,5 +181,17 @@ async function revokeKakaoAccessToken(accessToken) {
   }
 }
 
+// 구글 OAuth 인증 해제 요청
+async function revokeGoogleAccessToken(accessToken) {
+  const revokeUrl = `https://oauth2.googleapis.com/revoke?token=${accessToken}`;
+
+  try {
+      const response = await axios.get(revokeUrl);
+      console.log('구글 OAuth 인증 해제 요청 성공:', response.data);
+  } catch (error) {
+      console.error('구글 OAuth 인증 해제 요청 실패:', error.response.data);
+      throw error; // 오류를 호출자에게 다시 전달
+  }
+}
 
 module.exports = router;
