@@ -8,6 +8,7 @@ const multer = require('multer');
 const { User } = require('../user/user_schema');
 const { Travel } = require('../travel/travel_schema');
 const { Diary} = require('./diary_schema');
+const ImageTagAnalyze = require('../AI/ImageTagAnalyze'); // 이미지 태그 분류 함수를 포함한 파일
 
 // Google Cloud Storage 설정
 const storage = new Storage({
@@ -110,7 +111,7 @@ router.post('/', upload.array('images', 10), async (req, res) => {
 
           const files = req.files;
           for (const file of files) {
-            tags = []; // tag 분류 알고리즘 추가
+            const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
             const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
             await img.save(file.buffer);
             diary.img.push({ imgpath: img.publicUrl(), tag: tags });
@@ -163,7 +164,7 @@ router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
 
           const imgfiles = req.files;
           for (const file of imgfiles) {
-            tags = []; // tag 분류 알고리즘 추가
+            const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
             const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
             await img.save(file.buffer);
             diary.img.push({ imgpath: img.publicUrl(), tag: tags });

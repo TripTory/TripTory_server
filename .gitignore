@@ -154,3 +154,6 @@ dist
 
 # GCP Storage secret key
 triptory_storage_key.json
+
+# GCP Translate_API secret key
+triptory_translate_key.json
