@@ -17,6 +17,14 @@ const diarySchema = mongoose.Schema({
         type: Date,
         required: true
     },
+    img: {
+        type: [
+            {
+                imgpath: String,
+                tag: [String],
+            }
+        ]
+    },
     travel: {
         type: mongoose.Schema.ObjectId,
         ref: 'Travel'
