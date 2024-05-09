@@ -138,7 +138,7 @@ router.post('/', upload.array('images', 10), async (req, res) => {
   }
 });
 
-router.put('/:diaryId', async(req,res) => {
+router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
   console.log('일기 수정 요청');
   try {
     if(req.session && req.session.userId){
@@ -152,6 +152,26 @@ router.put('/:diaryId', async(req,res) => {
           return res.status(403).json({ success: false, message: '일기에 대한 권한이 없습니다.' });
         }
         
+        if(req.body.imgmodified){
+          console.log(req.body.imgmodified);
+          const [files] = await storage.bucket(bucketName).getFiles({
+            prefix: `diary/${diary._id}`,
+          });
+          await Promise.all(files.map(file => file.delete()));
+
+          diary.img = [];
+
+          const imgfiles = req.files;
+          for (const file of imgfiles) {
+            tags = []; // tag 분류 알고리즘 추가
+            const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
+            await img.save(file.buffer);
+            diary.img.push({ imgpath: img.publicUrl(), tag: tags });
+          }
+          
+          await diary.save();
+        }
+
         await Diary.findByIdAndUpdate(req.params.diaryId, {
           title: req.body.title,
           content: req.body.content,
