@@ -3,12 +3,25 @@ const router = express.Router();
 const axios = require('axios');
 const cookieParser = require('cookie-parser'); // 쿠키 파서 미들웨어 추가
 const session = require('express-session'); 
+const { Storage } = require('@google-cloud/storage');
+const multer = require('multer');
 
 const { User } = require('./user_schema');
 
 const dotenv = require("dotenv"); 
 require('dotenv').config();
 
+// Google Cloud Storage 설정
+const storage = new Storage({
+  projectId: process.env.GCP_PROJECT_ID, // GCP 프로젝트 ID
+  keyFilename: process.env.STORAGE_KEYFILE // 서비스 계정 키 파일 경로
+});
+const bucketName = process.env.STORAGE_BUCKET_NAME; // GCS 버킷 이름
+const bucket = storage.bucket(bucketName);
+
+// Multer 설정
+const multerStorage = multer.memoryStorage();
+const upload = multer({ storage: multerStorage });
 
 router.get('/', async (req, res) => {
   console.log("사용자 정보 요청");
@@ -63,13 +76,34 @@ router.get('/logout', async (req, res) => {
 })
 
 
-router.put('/', async (req, res) => {
+router.put('/', upload.single('profileImg'), async (req, res) => {
   console.log('사용자 정보 수정 요청');
   try {
     if(req.session && req.session.userId){
       const user = await User.findById(req.session.userId);
       if(user){
         console.log('수정할 사용자 ID:', user._id);
+
+        if (req.file) {
+            try{
+            const profileImgFile = req.file;
+            const imageName = user._id.toString(); // 클라이언트에서 전송한 이미지 이름을 추출합니다.
+            const file = bucket.file(`user/${imageName}`);    
+  
+            // GCS에 이미지 업로드
+            await file.save(profileImgFile.buffer, { contentType: profileImgFile.mimetype });
+        
+            // MongoDB에 이미지 경로 저장
+            const profileImgPath = `https://storage.googleapis.com/${bucketName}/user/${imageName}`;
+            user.profileimg = profileImgPath;
+            await user.save();  
+  
+            console.log('프로필 사진 업로드 성공');
+          } catch (error) {
+            console.error(error);
+            res.status(500).json({ success: false, message: '프로필 사진 업로드에 실패했습니다.' });
+          }
+        } 
 
         const updateuser = await User.findByIdAndUpdate(user._id, {
           name: req.body.name,
