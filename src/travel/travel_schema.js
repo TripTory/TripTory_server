@@ -17,6 +17,9 @@ const travelSchema = mongoose.Schema({
       latitude: Number,
       longitude: Number,
    },
+   travelimg: {
+      type: String
+   },
     invited: {
        type: [mongoose.Schema.Types.ObjectId],
        ref: 'User' // User 모델과 연결
