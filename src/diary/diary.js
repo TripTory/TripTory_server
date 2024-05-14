@@ -103,7 +103,6 @@ router.post('/', upload.array('images', 10), async (req, res) => {
           const diary = new Diary({
             title: req.body.title,
             content: req.body.content,
-            location: req.body.location,
             date: req.body.date,
             travel: [travel._id],
             userId: [user._id]
@@ -176,7 +175,6 @@ router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
         await Diary.findByIdAndUpdate(req.params.diaryId, {
           title: req.body.title,
           content: req.body.content,
-          location: req.body.location,
           date: req.body.date
         }, { new: true });
   
