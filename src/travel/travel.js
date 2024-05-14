@@ -62,7 +62,7 @@ router.get('/:travelid', async (req, res) => {
 });
 
 
-router.post('/', upload.single('TravelImg'),async (req, res) => {
+router.post('/', upload.single('travelimg'),async (req, res) => {
   console.log("여행 생성 요청");
   try {
     if(req.session && req.session.userId){
@@ -85,7 +85,6 @@ router.post('/', upload.single('TravelImg'),async (req, res) => {
           startdate: req.body.startdate,
           enddate: req.body.enddate,
           location: req.body.location,
-          travelimg: req.body.travelimg,
           invited: [user._id], // 초대된 사용자 배열에 현재 사용자 추가
           ivtoken: ivtoken
         });
@@ -113,9 +112,6 @@ router.post('/', upload.single('TravelImg'),async (req, res) => {
           }
         }
        
-        
-        
-  
         const savedTravel = await travel.save(); // 여행 객체 저장
         
         return res.status(200).json({
@@ -176,7 +172,7 @@ router.put('/invite', async (req, res) => {
   }
 });
 
-router.put('/:travelid', async (req, res) => {
+router.put('/:travelid', upload.single('travelimg'), async (req, res) => {
   console.log('여행 수정 요청');
   try {
     if (req.session && req.session.userId){
@@ -211,15 +207,12 @@ router.put('/:travelid', async (req, res) => {
           res.status(500).json({ success: false, message: '여행 대표 사진 변경에 실패했습니다.' });
           }
         }
-       
-
   
         const updatetravel = await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
           startdate: req.body.startdate,
           enddate: req.body.enddate,
           location: req.body.location,
-          travelimg: req.body.travelimg,
           invited: [user._id] // 초대된 사용자 배열에 현재 사용자 추가
         }, {new: true} );
         
