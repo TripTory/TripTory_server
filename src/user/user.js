@@ -143,15 +143,14 @@ router.delete('/', async (req, res) => {
     
           await User.findByIdAndDelete(user._id);
 
-          // 네이버 OAuth 인증 해제 요청
-          await revokeNaverAccessToken(user.oauthAccessToken);
+          if(user.authprovider == 'naver') 
+            await revokeNaverAccessToken(user.oauthAccessToken);
+          
+          else if(user.authprovider == 'kakao') 
+            await revokeKakaoAccessToken(user.oauthAccessToken);
+          
+          else await revokeGoogleAccessToken(user.googleAccessToken);
 
-          // 카카오 계정 탈퇴 요청
-          await revokeKakaoAccessToken(user.oauthAccessToken);
-
-          // 구글 OAuth 인증 해제 요청
-          await revokeGoogleAccessToken(user.googleAccessToken);
-    
           // 세션 및 쿠키 삭제
           req.session.destroy(err => {
             if (err) {

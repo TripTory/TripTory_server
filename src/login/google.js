@@ -56,6 +56,7 @@ router.get('/callback', async (req, res) => {
                 oauthId: googleUserData.id,
                 name: googleUserData.name,
                 email: googleUserData.email,
+                authprovider: "google",
                 oauthAccessToken: accessToken
                 // 다른 사용자 정보 필드 추가 가능
             });

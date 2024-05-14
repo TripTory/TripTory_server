@@ -58,6 +58,7 @@ router.get('/callback', async (req, res) => {
           oauthId: naveruserData.id,
           name: naveruserData.name,
           email: naveruserData.email,
+          authprovider: "naver",
           oauthAccessToken: accessToken
           // 다른 사용자 정보 필드 추가 가능
         });

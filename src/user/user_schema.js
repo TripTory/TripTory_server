@@ -13,6 +13,10 @@ const userSchema = mongoose.Schema({
    profileimg: {
        type: String
    },
+   authprovider: {
+       type: String,
+       required: true
+   },
    oauthId: {
        type: String,
        trim: true,
