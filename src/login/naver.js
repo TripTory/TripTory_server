@@ -10,8 +10,14 @@ const dotenv = require("dotenv");
 require('dotenv').config();
 
 router.get('/', async(req, res) => {
-  const oauthUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${process.env.NAVER_ID}&redirect_uri=${process.env.NAVER_URI}&state=abcde12345`;
-  res.redirect(oauthUrl);
+  try {
+    // 네이버 OAuth 인증 URL 생성
+    const authorizationUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${process.env.NAVER_ID}&redirect_uri=${process.env.NAVER_URI}&state=abcde12345`;
+    res.json({ authorizationUrl });
+  } catch (error) {
+    console.error("Failed to generate Naver OAuth authorization URL:", error);
+    res.status(500).json({ error: "Failed to generate authorization URL" });
+  }
 });
 
 
@@ -68,7 +74,8 @@ router.get('/callback', async (req, res) => {
         req.session.userId = user._id; 
         res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000 }); // 세션에 쿠키 저장, 유효기간 1일
 
-        res.json({ message: '회원가입 성공', email: naveruserData.email });
+        //res.json({ message: '회원가입 성공', email: naveruserData.email });
+        res.redirect(`${process.env.FRONT_UR}/join`);
       } else {
         // 기존 사용자인 경우 로그인 메시지 응답
         req.session.userId = user._id; 
@@ -78,7 +85,8 @@ router.get('/callback', async (req, res) => {
             oauthAccessToken: accessToken
         }, {new: true} );
 
-        res.json({ message: '로그인 성공', email: naveruserData.email });
+        //res.json({ message: '로그인 성공', email: naveruserData.email });
+        res.redirect(`${process.env.FRONT_URL}/home`);
       }
 
     } catch (error) {
