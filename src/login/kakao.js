@@ -46,6 +46,7 @@ router.get('/callback', async (req, res) => {
           oauthId: kakaoUserData.id,
           name: kakaoUserData.properties.nickname, // 이름은 properties 안에 있음
           email: kakaoUserData.kakao_account.email,
+          authprovider: "kakao",
           oauthAccessToken: accessToken
         });
 
