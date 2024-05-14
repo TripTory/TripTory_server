@@ -149,7 +149,7 @@ router.delete('/', async (req, res) => {
           else if(user.authprovider == 'kakao') 
             await revokeKakaoAccessToken(user.oauthAccessToken);
           
-          else await revokeGoogleAccessToken(user.googleAccessToken);
+          else await revokeGoogleAccessToken(user.oauthAccessToken);
 
           // 세션 및 쿠키 삭제
           req.session.destroy(err => {
