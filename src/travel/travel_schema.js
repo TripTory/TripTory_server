@@ -16,6 +16,7 @@ const travelSchema = mongoose.Schema({
     location: {
       latitude: Number,
       longitude: Number,
+      region: String
    },
    travelimg: {
       type: String

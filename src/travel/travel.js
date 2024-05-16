@@ -156,7 +156,7 @@ router.put('/invite', async (req, res) => {
           await travel.save(); // 여행 객체 저장
   
           console.log('사용자 초대 완료');
-          return res.status(200).json({ success: true, message: '사용자 초대 완료' });
+          return res.status(200).json({ success: true, message: '사용자 초대 완료', travel });
 
         } else {
           console.log('초대할 사용자를 찾을 수 없습니다.');
@@ -212,7 +212,6 @@ router.put('/:travelid', async (req, res) => {
           }
         }
        
-
   
         const updatetravel = await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
