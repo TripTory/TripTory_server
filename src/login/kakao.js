@@ -1,11 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const cors = require('cors');
 const { User } = require('../user/user_schema');
 const dotenv = require("dotenv"); 
 require('dotenv').config();
 
 dotenv.config();
+
+const corsOptions = {
+  origin: process.env.FRONT_URL, // 허용할 출처
+  credentials: true // 인증 정보 허용
+};
+
+router.use(cors(corsOptions));
 
 router.get('/', (req, res) => {
   try {
