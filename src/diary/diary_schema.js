@@ -9,10 +9,6 @@ const diarySchema = mongoose.Schema({
         type: String,
         maxlength: 2000
     },
-    location: {
-      latitude: Number,
-      longitude: Number,
-    },
     date: {
         type: Date,
         required: true
@@ -30,7 +26,7 @@ const diarySchema = mongoose.Schema({
         ref: 'Travel'
     },
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.ObjectId,
         ref: 'User'
     }
 }, { versionKey: false });
