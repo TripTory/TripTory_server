@@ -213,17 +213,21 @@ router.put('/:travelid', async (req, res) => {
         }
        
   
-        const updatetravel = await Travel.findByIdAndUpdate(req.params.travelid, {
+        await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
           startdate: req.body.startdate,
           enddate: req.body.enddate,
-          location: req.body.location,
           travelimg: req.body.travelimg,
           invited: [user._id] // 초대된 사용자 배열에 현재 사용자 추가
         }, {new: true} );
+
+        if(req.body.location){
+          travel.location = { ...travel.location, ...req.body.location };
+          await travel.save();
+        }
         
         console.log('여행 수정 완료');
-        return res.status(200).json({ success: true, travel: updatetravel });
+        return res.status(200).json({ success: true, travel });
   
       } else {
         console.log('해당 여행을 찾을 수 없습니다.');
