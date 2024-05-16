@@ -1,15 +1,28 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const cors = require('cors');
 const { User } = require('../user/user_schema');
 
 const dotenv = require("dotenv");
 require('dotenv').config();
 
+const corsOptions = {
+    origin: process.env.FRONT_URL, // 허용할 출처
+    credentials: true // 인증 정보 허용
+  };
+  
+router.use(cors(corsOptions));
+
 router.get('/', async (req, res) => {
-    const scope = encodeURIComponent('profile email');
-    const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${process.env.GOOGLE_ID}&redirect_uri=${process.env.GOOGLE_URI}&scope=${scope}&state=state_parameter_passthrough_value`;
-    res.redirect(oauthUrl);
+    try {
+        const scope = encodeURIComponent('profile email');
+        const authorizationUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${process.env.GOOGLE_ID}&redirect_uri=${process.env.GOOGLE_URI}&scope=${scope}&state=state_parameter_passthrough_value`;
+        res.json(authorizationUrl);
+      } catch (error) {
+        console.error("Failed to generate Naver OAuth authorization URL:", error);
+        res.status(500).json({ error: "Failed to generate authorization URL" });
+      }
 });
 
 
@@ -66,7 +79,8 @@ router.get('/callback', async (req, res) => {
             req.session.userId = user._id;
             res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000 });
 
-            res.json({ message: '회원가입 성공', email: googleUserData.email });
+            // res.json({ message: '회원가입 성공', email: googleUserData.email });
+            res.redirect(`${process.env.FRONT_URL}/join`);
 
         } else {
             req.session.userId = user._id;
@@ -78,19 +92,20 @@ router.get('/callback', async (req, res) => {
             }, {new: true} );
             
             // 기존 사용자인 경우 로그인 메시지 응답
-            res.json({ message: '로그인 성공', email: googleUserData.email });
+            // res.json({ message: '로그인 성공', email: googleUserData.email });
+            res.redirect(`${process.env.FRONT_URL}/home`);
         }
 
     } catch (error) {
         if (error.code === 11000 && error.keyPattern.email) {
             // 중복된 이메일 주소로 인한 오류
             return res.status(400).json({ error: '중복된 이메일 주소입니다.' });
+            res.status(500).redirect(`${process.env.FRONT_URL}/login`); // 오류 발생 시 로그인 화면으로 리다이렉트
         } else {
             console.error('사용자 정보 요청 실패:', error);
-            res.status(500).send('사용자 정보 요청 실패');
+            res.status(500).redirect(`${process.env.FRONT_URL}/login`); // 오류 발생 시 로그인 화면으로 리다이렉트
         }
     }
-
 });
 
 module.exports = router;
