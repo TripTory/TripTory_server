@@ -140,16 +140,27 @@ router.delete('/', async (req, res) => {
 
         if(user){
           console.log('삭제할 사용자 ID:', user._id);
-    
-          await User.findByIdAndDelete(user._id);
 
-          if(user.authprovider == 'naver') 
+
+          // OAuth provider 구분
+          if(user.authprovider == 'naver') //naver
             await revokeNaverAccessToken(user.oauthAccessToken);
           
-          else if(user.authprovider == 'kakao') 
+          else if(user.authprovider == 'kakao') //kakao
             await revokeKakaoAccessToken(user.oauthAccessToken);
-          
-          else await revokeGoogleAccessToken(user.oauthAccessToken);
+
+          else await revokeGoogleAccessToken(user.oauthAccessToken); //google
+
+          // Storage에서 삭제
+          const [files] = await storage.bucket(bucketName).getFiles({
+            prefix: `user/${user._id}`,
+          });
+          await Promise.all(files.map(file => file.delete()));
+
+              
+          // MongoDB에서 삭제
+          await User.findByIdAndDelete(user._id);
+
 
           // 세션 및 쿠키 삭제
           req.session.destroy(err => {

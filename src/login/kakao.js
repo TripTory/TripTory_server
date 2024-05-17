@@ -70,7 +70,7 @@ router.get('/callback', async (req, res) => {
     } catch (error) {
       if (error.code === 11000 && error.keyPattern.email) {
         // 중복된 이메일 주소로 인한 오류
-        return res.status(400).json({ error: '중복된 이메일 주소입니다.' });
+        return res.status(400).json({ error: '이미 가입된 이메일입니다. 다른 방식으로 로그인해주세요.' });
       } else {
         console.error('사용자 정보 요청 실패:', error);
         res.status(500).send('사용자 정보 요청 실패');

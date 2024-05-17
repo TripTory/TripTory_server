@@ -9,10 +9,6 @@ const diarySchema = mongoose.Schema({
         type: String,
         maxlength: 2000
     },
-    location: {
-      latitude: Number,
-      longitude: Number,
-    },
     date: {
         type: Date,
         required: true
