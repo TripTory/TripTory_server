@@ -202,7 +202,7 @@ router.put('/:travelid', async (req, res) => {
 
           // MongoDB에 이미지 경로 저장
           const TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
-          travel.traveling = TravelImgPath;
+          travel.travelimg = TravelImgPath;
           await travel.save();  
 
           console.log('여행 대표 사진 변경 성공');
