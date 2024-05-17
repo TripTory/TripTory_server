@@ -148,7 +148,7 @@ router.delete('/', async (req, res) => {
           
           else if(user.authprovider == 'kakao') //kakao
             await revokeKakaoAccessToken(user.oauthAccessToken);
-          
+
           else await revokeGoogleAccessToken(user.oauthAccessToken); //google
 
           // Storage에서 삭제
@@ -160,6 +160,7 @@ router.delete('/', async (req, res) => {
               
           // MongoDB에서 삭제
           await User.findByIdAndDelete(user._id);
+
 
           // 세션 및 쿠키 삭제
           req.session.destroy(err => {
