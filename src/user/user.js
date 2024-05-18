@@ -51,6 +51,28 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+router.get('/:userid', async (req, res) => {
+  console.log("사용자 정보 요청");
+  try {
+    const user = await User.findById(req.params.userid);
+
+    if (user) { // 특정 사용자 있는지 확인
+      return res.status(200).json({
+        success: true,
+        user,
+      });
+    } else {
+      console.log('사용자를 찾을 수 없습니다.');
+      return res.status(404).json({ success: false, message: '해당 사용자를 찾을 수 없습니다.' });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+
 router.get('/logout', async (req, res) => {
   console.log('로그아웃 요청');
   try {
