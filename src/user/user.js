@@ -59,6 +59,28 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+router.get('/:userid', async (req, res) => {
+  console.log("사용자 정보 요청");
+  try {
+    const user = await User.findById(req.params.userid);
+
+    if (user) { // 특정 사용자 있는지 확인
+      return res.status(200).json({
+        success: true,
+        user,
+      });
+    } else {
+      console.log('사용자를 찾을 수 없습니다.');
+      return res.status(404).json({ success: false, message: '해당 사용자를 찾을 수 없습니다.' });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+
 router.get('/logout', async (req, res) => {
   console.log('로그아웃 요청');
   try {
@@ -148,16 +170,27 @@ router.delete('/', async (req, res) => {
 
         if(user){
           console.log('삭제할 사용자 ID:', user._id);
-    
-          await User.findByIdAndDelete(user._id);
 
-          if(user.authprovider == 'naver') 
+
+          // OAuth provider 구분
+          if(user.authprovider == 'naver') //naver
             await revokeNaverAccessToken(user.oauthAccessToken);
           
-          else if(user.authprovider == 'kakao') 
+          else if(user.authprovider == 'kakao') //kakao
             await revokeKakaoAccessToken(user.oauthAccessToken);
-          
-          else await revokeGoogleAccessToken(user.oauthAccessToken);
+
+          else await revokeGoogleAccessToken(user.oauthAccessToken); //google
+
+          // Storage에서 삭제
+          const [files] = await storage.bucket(bucketName).getFiles({
+            prefix: `user/${user._id}`,
+          });
+          await Promise.all(files.map(file => file.delete()));
+
+              
+          // MongoDB에서 삭제
+          await User.findByIdAndDelete(user._id);
+
 
           // 세션 및 쿠키 삭제
           req.session.destroy(err => {
