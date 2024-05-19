@@ -4,11 +4,20 @@ const cookieParser = require('cookie-parser'); // 쿠키 파서 미들웨어 추
 const session = require('express-session'); 
 const { Storage } = require('@google-cloud/storage');
 const multer = require('multer');
+const cors = require('cors');
 
 const { User } = require('../user/user_schema');
 const { Travel } = require('../travel/travel_schema');
 const { Diary} = require('./diary_schema');
 const ImageTagAnalyze = require('../AI/ImageTagAnalyze'); // 이미지 태그 분류 함수를 포함한 파일
+
+const corsOptions = {
+  origin: process.env.FRONT_URL, // 허용할 출처
+  credentials: true // 인증 정보 허용
+};
+
+router.use(cors(corsOptions));
+
 
 // Google Cloud Storage 설정
 const storage = new Storage({

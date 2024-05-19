@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const cors = require('cors');
 const cookieParser = require('cookie-parser'); // 쿠키 파서 미들웨어 추가
 const session = require('express-session'); 
 const { Storage } = require('@google-cloud/storage');
@@ -10,6 +11,13 @@ const { User } = require('./user_schema');
 
 const dotenv = require("dotenv"); 
 require('dotenv').config();
+
+const corsOptions = {
+  origin: process.env.FRONT_URL, // 허용할 출처
+  credentials: true // 인증 정보 허용
+};
+
+router.use(cors(corsOptions));
 
 // Google Cloud Storage 설정
 const storage = new Storage({

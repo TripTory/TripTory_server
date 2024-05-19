@@ -1,12 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const cors = require('cors');
 
 const { Storage } = require('@google-cloud/storage');
 const multer = require('multer');
 
 const { User } = require('../user/user_schema');
 const { Travel } = require('./travel_schema');
+
+const corsOptions = {
+  origin: process.env.FRONT_URL, // 허용할 출처
+  credentials: true // 인증 정보 허용
+};
+
+router.use(cors(corsOptions));
+
 
 // Google Cloud Storage 설정
 const storage = new Storage({
