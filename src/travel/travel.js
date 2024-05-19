@@ -1,12 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const cors = require('cors');
 
 const { Storage } = require('@google-cloud/storage');
 const multer = require('multer');
 
 const { User } = require('../user/user_schema');
 const { Travel } = require('./travel_schema');
+
+const corsOptions = {
+  origin: process.env.FRONT_URL, // 허용할 출처
+  credentials: true // 인증 정보 허용
+};
+
+router.use(cors(corsOptions));
+
 
 // Google Cloud Storage 설정
 const storage = new Storage({
@@ -62,7 +71,7 @@ router.get('/:travelid', async (req, res) => {
 });
 
 
-router.post('/', upload.single('TravelImg'),async (req, res) => {
+router.post('/', upload.single('image'),async (req, res) => {
   console.log("여행 생성 요청");
   try {
     if(req.session && req.session.userId){
@@ -85,37 +94,32 @@ router.post('/', upload.single('TravelImg'),async (req, res) => {
           startdate: req.body.startdate,
           enddate: req.body.enddate,
           location: req.body.location,
-          travelimg: req.body.travelimg,
+          travelimg: null, // 이미지 경로 저장
           invited: [user._id], // 초대된 사용자 배열에 현재 사용자 추가
           ivtoken: ivtoken
         });
-
-        // 여행 대표 이미지 업로드 
+        
+        // 여행 대표 이미지 업로드
         if (req.file) {
           try {
-          const TravelImgFile = req.file;
-          const imageName = travel._id.toString(); // 클라이언트에서 전송한 이미지 이름을 추출합니다.
-          const file = bucket.file(`travel/${imageName}`);    
+            const TravelImgFile = req.file;
+            const imageName = travel._id.toString();
+            const file = bucket.file(`travel/${imageName}`);
 
-          // GCS에 이미지 업로드
-          await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
+            // GCS에 이미지 업로드
+            await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
 
-          // MongoDB에 이미지 경로 저장
-          const TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
-          
-          travel.travelimg = TravelImgPath;
-          await travel.save();  
+            // MongoDB TravelImgPath에 이미지 경로 저장
+            TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
+            travel.travelimg = TravelImgPath;
+            console.log('여행 대표 사진 업로드 성공');
 
-          console.log('여행 대표 사진 업로드 성공');
           } catch (error) {
-          console.error(error);
-          res.status(500).json({ success: false, message: '여행 대표 사진 업로드에 실패했습니다.' });
+            console.error(error);
+            return res.status(500).json({ success: false, message: '여행 대표 사진 업로드에 실패했습니다.' });
           }
         }
        
-        
-        
-  
         const savedTravel = await travel.save(); // 여행 객체 저장
         
         return res.status(200).json({
@@ -176,7 +180,7 @@ router.put('/invite', async (req, res) => {
   }
 });
 
-router.put('/:travelid', async (req, res) => {
+router.put('/:travelid', upload.single('image'), async (req, res) => {
   console.log('여행 수정 요청');
   try {
     if (req.session && req.session.userId){
@@ -202,7 +206,7 @@ router.put('/:travelid', async (req, res) => {
 
           // MongoDB에 이미지 경로 저장
           const TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
-          travel.traveling = TravelImgPath;
+          travel.travelimg = TravelImgPath;
           await travel.save();  
 
           console.log('여행 대표 사진 변경 성공');
@@ -217,7 +221,7 @@ router.put('/:travelid', async (req, res) => {
           title: req.body.title,
           startdate: req.body.startdate,
           enddate: req.body.enddate,
-          travelimg: req.body.travelimg,
+          travelimg: TravelImgPath,
           invited: [user._id] // 초대된 사용자 배열에 현재 사용자 추가
         }, {new: true} );
 
@@ -263,8 +267,15 @@ router.delete('/:travelid', async (req, res) => {
         await travel.save();
       
         if (travel.invited.length === 0) {
+          // MongoDB에서 삭제
           await Travel.findByIdAndDelete(travel._id);
         }
+
+        // Storage에서 삭제
+        const [files] = await storage.bucket(bucketName).getFiles({
+          prefix: `travel/${travel._id}`,
+        });
+        await Promise.all(files.map(file => file.delete()));
       
         console.log('여행 삭제 완료');
         return res.status(200).json({ success: true, message: '여행 삭제 완료'});
