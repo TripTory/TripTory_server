@@ -14,8 +14,14 @@ const app = express();
 const port = process.env.PORT;
 
 app.use(express.json());
-app.use(cors());
 
+//app.use(cors());
+// 클라이언트의 출처를 명시적으로 지정하고, 인증 정보를 허용
+const corsOptions = {
+    origin: 'http://localhost:3000', // 클라이언트의 출처
+    credentials: true // 인증 정보 허용
+  };
+  app.use(cors(corsOptions));
 
 // 쿠키 파서와 세션 미들웨어 사용 설정
 app.use(cookieParser());
