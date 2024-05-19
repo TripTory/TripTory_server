@@ -1,12 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
+const cors = require('cors');
 
 const { Storage } = require('@google-cloud/storage');
 const multer = require('multer');
 
 const { User } = require('../user/user_schema');
 const { Travel } = require('./travel_schema');
+
+const corsOptions = {
+  origin: process.env.FRONT_URL, // 허용할 출처
+  credentials: true // 인증 정보 허용
+};
+
+router.use(cors(corsOptions));
+
 
 // Google Cloud Storage 설정
 const storage = new Storage({
@@ -186,7 +195,6 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
         }
 
         // 여행 대표 이미지 업로드 
-        TravelImgPath = travel.TravelImgPath
         if (req.file) {
           try {
           const TravelImgFile = req.file;
@@ -197,7 +205,7 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
 
           // MongoDB에 이미지 경로 저장
-          TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
+          const TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
           travel.travelimg = TravelImgPath;
           await travel.save();  
 
