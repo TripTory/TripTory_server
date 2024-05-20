@@ -106,7 +106,7 @@ router.get('/:userid', async (req, res) => {
 });
 
 
-router.post('/logout', async (req, res) => {
+router.delete('/logout', async (req, res) => {
   console.log('로그아웃 요청');
   try {
     if (req.session && req.session.userId){
