@@ -31,20 +31,38 @@ const bucket = storage.bucket(bucketName);
 const multerStorage = multer.memoryStorage();
 const upload = multer({ storage: multerStorage });
 
+function getSignedUrl(user, res) {
+  const options = {
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 60 * 1000, // 1분 동안 유효
+  };
+
+  bucket.file(`user/${user._id}`).getSignedUrl(options, (err, url) => {
+    if (err) {
+      console.error('이미지 URL 생성 실패:', err);
+      return res.status(500).json({ success: false, message: '이미지 URL 생성 실패' });
+    }
+    const { oauthId, oauthAccessToken, profileimg, ...userinfo } = user;
+    return res.status(200).json({ success: true, userinfo, url });
+  });
+}
+
 router.get('/', async (req, res) => {
   console.log("사용자 정보 요청");
   try {
     if (req.session && req.session.userId) {
-      // 세션에서 사용자 ID를 사용하여 사용자를 식별하고 작업을 수행
-      const userId = req.session.userId;
       // 사용자 ID를 기반으로 사용자 정보를 가져옴
-      const user = await User.findById(userId);
+      const user = await User.findById(req.session.userId);
+
       if (user) {
-        // 사용자 정보가 있으면 응답
-        return res.status(200).json({
-          success: true,
-          user,
-        });
+        if (!user.profileimg){
+          const { oauthId, oauthAccessToken, profileimg, ...userinfo } = user;
+          return res.status(200).json({ success: true, userinfo });
+        }
+
+        getSignedUrl(user, res);
+
       } else {
         console.log('사용자를 찾을 수 없습니다.');
         return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
@@ -65,11 +83,14 @@ router.get('/:userid', async (req, res) => {
   try {
     const user = await User.findById(req.params.userid);
 
-    if (user) { // 특정 사용자 있는지 확인
-      return res.status(200).json({
-        success: true,
-        user,
-      });
+    if (user) {
+      if (!user.profileimg){
+        const { oauthId, oauthAccessToken, profileimg, ...userinfo } = user;
+        return res.status(200).json({ success: true, userinfo });
+      }
+
+      getSignedUrl(user, res);
+
     } else {
       console.log('사용자를 찾을 수 없습니다.');
       return res.status(404).json({ success: false, message: '해당 사용자를 찾을 수 없습니다.' });
@@ -117,15 +138,12 @@ router.put('/', upload.single('profileImg'), async (req, res) => {
         if (req.file) {
             try{
             const profileImgFile = req.file;
-            const imageName = user._id.toString(); // 클라이언트에서 전송한 이미지 이름을 추출합니다.
-            const file = bucket.file(`user/${imageName}`);    
+            const file = bucket.file(`user/${user._id}`);    
   
             // GCS에 이미지 업로드
             await file.save(profileImgFile.buffer, { contentType: profileImgFile.mimetype });
         
-            // MongoDB에 이미지 경로 저장
-            const profileImgPath = `https://storage.googleapis.com/${bucketName}/user/${imageName}`;
-            user.profileimg = profileImgPath;
+            user.profileimg = user._id;
             await user.save();  
   
             console.log('프로필 사진 업로드 성공');
