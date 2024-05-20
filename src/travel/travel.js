@@ -39,7 +39,7 @@ function getSignedUrl(travel, res) {
     }
     // travel 객체를 단순한 JavaScript 객체로 변환하고 필요한 필드만 추출
     const travelObj = travel.toObject();
-    const { title, startdate, enddate, location, travelimg, invited, ...travelInfo } = travelObj;
+    const travelInfo = travelObj; // 숨겨야하는 민감 정보 없음
     return res.status(200).json({ success: true, travelInfo, url });
   });
 }
@@ -115,7 +115,9 @@ router.post('/', upload.single('image'),async (req, res) => {
           location: req.body.location,
           travelimg: null, // 이미지 경로 저장
           invited: [user._id], // 초대된 사용자 배열에 현재 사용자 추가
-          ivtoken: ivtoken
+          ivtoken: ivtoken,
+          userName: [user.name],  // 새 사용자 이름 추가
+          userImg: [user.profileimg], // 새 사용자 img 추가
         });
         
         // 여행 대표 이미지 업로드
@@ -168,6 +170,8 @@ router.put('/invite', async (req, res) => {
         console.log('여행 ID:', travel._id);
         if (user) {
           console.log('초대할 사용자 ID:', user._id);
+          console.log('초대할 사용자 name:', user.name);
+          console.log('초대할 사용자 profileimg:', user.profileimg);
   
           if (travel.invited.includes(user._id)) {
             console.log('이미 초대된 사용자입니다.');
@@ -175,6 +179,8 @@ router.put('/invite', async (req, res) => {
           }
   
           travel.invited.push(user._id); // 초대된 사용자 배열에 추가
+          travel.invited.push(user.name); // name 추가
+          travel.invited.push(user.profileimg); // 프로필 이미지 추가
           await travel.save(); // 여행 객체 저장
   
           console.log('사용자 초대 완료');
@@ -239,7 +245,9 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           startdate: req.body.startdate,
           enddate: req.body.enddate,
           travelimg: imageName, // MongoDB에 이미지 이름 저장
-          invited: [user._id] // 초대된 사용자 배열에 현재 사용자 추가
+          invited: [user._id], // 초대된 사용자 배열에 현재 사용자 추가
+          userName: [user.name],  // 새 사용자 이름 추가
+          userImg: [user.profileimg], // 새 사용자 img 추가
         }, {new: true} );
 
         if(req.body.location){
