@@ -25,6 +25,25 @@ const storage = new Storage({
 const bucketName = process.env.STORAGE_BUCKET_NAME; // GCS 버킷 이름
 const bucket = storage.bucket(bucketName);
 
+function getSignedUrl(travel, res) {
+  const options = {
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 60 * 1000, // 1분 동안 유효
+  };
+
+  bucket.file(`travel/${travel._id}`).getSignedUrl(options, (err, url) => {
+    if (err) {
+      console.error('이미지 URL 생성 실패:', err);
+      return res.status(500).json({ success: false, message: '이미지 URL 생성 실패' });
+    }
+    // travel 객체를 단순한 JavaScript 객체로 변환하고 필요한 필드만 추출
+    const travelObj = travel.toObject();
+    const { title, startdate, enddate, location, travelimg, invited, ...travelInfo } = travelObj;
+    return res.status(200).json({ success: true, travelInfo, url });
+  });
+}
+
 // Multer 설정
 const multerStorage = multer.memoryStorage();
 const upload = multer({ storage: multerStorage });
@@ -109,9 +128,8 @@ router.post('/', upload.single('image'),async (req, res) => {
             // GCS에 이미지 업로드
             await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
 
-            // MongoDB TravelImgPath에 이미지 경로 저장
-            TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
-            travel.travelimg = TravelImgPath;
+            // MongoDB에 이미지 이름 저장
+            travel.travelimg = imageName; // TravelImgPath(URL) => imageName(_id)
             console.log('여행 대표 사진 업로드 성공');
 
           } catch (error) {
@@ -204,9 +222,8 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           // GCS에 이미지 업로드
           await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
 
-          // MongoDB에 이미지 경로 저장
-          const TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
-          travel.travelimg = TravelImgPath;
+          // MongoDB에 이미지 이름 저장
+          travel.travelimg = imageName;
           await travel.save();  
 
           console.log('여행 대표 사진 변경 성공');
@@ -221,7 +238,7 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           title: req.body.title,
           startdate: req.body.startdate,
           enddate: req.body.enddate,
-          travelimg: TravelImgPath,
+          travelimg: imageName, // MongoDB에 이미지 이름 저장
           invited: [user._id] // 초대된 사용자 배열에 현재 사용자 추가
         }, {new: true} );
 
