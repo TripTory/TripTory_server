@@ -43,7 +43,6 @@ function getSignedUrl(user, res) {
       console.error('이미지 URL 생성 실패:', err);
       return res.status(500).json({ success: false, message: '이미지 URL 생성 실패' });
     }
-    // user 객체를 단순한 JavaScript 객체로 변환하고 필요한 필드만 추출
     const userObj = user.toObject();
     const { oauthId, oauthAccessToken, profileimg, ...userinfo } = userObj;
     return res.status(200).json({ success: true, userinfo, url });
@@ -59,7 +58,6 @@ router.get('/', async (req, res) => {
 
       if (user) {
         if (!user.profileimg){
-          // user 객체를 단순한 JavaScript 객체로 변환하고 필요한 필드만 추출
           const userObj = user.toObject();
           const { oauthId, oauthAccessToken, profileimg, ...userinfo } = userObj;
           return res.status(200).json({ success: true, userinfo });
@@ -89,7 +87,8 @@ router.get('/:userid', async (req, res) => {
 
     if (user) {
       if (!user.profileimg){
-        const { oauthId, oauthAccessToken, profileimg, ...userinfo } = user;
+        const userObj = user.toObject();
+        const { oauthId, oauthAccessToken, profileimg, ...userinfo } = userObj;
         return res.status(200).json({ success: true, userinfo });
       }
 
