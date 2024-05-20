@@ -21,7 +21,7 @@ const travelSchema = mongoose.Schema({
    travelimg: {
       type: String
    },
-    invited: {
+   invited: {
        type: [mongoose.Schema.Types.ObjectId],
        ref: 'User' // User 모델과 연결
    },
@@ -31,11 +31,11 @@ const travelSchema = mongoose.Schema({
    },
    userName: {
       type: String,
-      required: true
+      ref: 'User'
    },
    userImg: {
       type: String,
-      required: true
+      ref: 'User'
   }
 
 }, { versionKey: false });

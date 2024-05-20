@@ -25,6 +25,10 @@ const storage = new Storage({
 const bucketName = process.env.STORAGE_BUCKET_NAME; // GCS 버킷 이름
 const bucket = storage.bucket(bucketName);
 
+// Multer 설정
+const multerStorage = multer.memoryStorage();
+const upload = multer({ storage: multerStorage });
+
 function getSignedUrl(travel, res) {
   const options = {
     version: 'v4',
@@ -44,9 +48,6 @@ function getSignedUrl(travel, res) {
   });
 }
 
-// Multer 설정
-const multerStorage = multer.memoryStorage();
-const upload = multer({ storage: multerStorage });
 
 router.get('/', async (req, res) => {
   console.log("여행 목록 요청");
@@ -179,8 +180,8 @@ router.put('/invite', async (req, res) => {
           }
   
           travel.invited.push(user._id); // 초대된 사용자 배열에 추가
-          travel.invited.push(user.name); // name 추가
-          travel.invited.push(user.profileimg); // 프로필 이미지 추가
+          travel.userName.push(user.name); // 사용자 이름 추가
+          travel.userImg.push(user.profileimg); // 프로필 이미지 추가
           await travel.save(); // 여행 객체 저장
   
           console.log('사용자 초대 완료');
@@ -245,9 +246,9 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           startdate: req.body.startdate,
           enddate: req.body.enddate,
           travelimg: imageName, // MongoDB에 이미지 이름 저장
-          invited: [user._id], // 초대된 사용자 배열에 현재 사용자 추가
-          userName: [user.name],  // 새 사용자 이름 추가
-          userImg: [user.profileimg], // 새 사용자 img 추가
+          // invited: [user._id], // 초대된 사용자 배열에 현재 사용자 추가
+          // userName: user.name,  // 새 사용자 이름 추가
+          // userImg: user.profileimg, // 새 사용자 img 추가
         }, {new: true} );
 
         if(req.body.location){
