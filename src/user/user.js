@@ -106,18 +106,18 @@ router.get('/:userid', async (req, res) => {
 });
 
 
-router.get('/logout', async (req, res) => {
+router.post('/logout', async (req, res) => {
   console.log('로그아웃 요청');
   try {
     if (req.session && req.session.userId){
       req.session.destroy(err => {
         if (err) {
           console.error('세션 제거 실패:', err);
-          res.status(500).send('세션 제거 실패');
+          return res.status(500).send('세션 제거 실패');
         } else {
           console.log('로그아웃 성공');
           res.clearCookie('userSession'); // 쿠키도 제거합니다.
-          res.status(200).send('로그아웃 성공');
+          return res.status(200).send('로그아웃 성공');
         }
       });
     } else {
@@ -129,6 +129,7 @@ router.get('/logout', async (req, res) => {
     return res.status(500).json({ success: false, message: '서버 오류' });
   }
 })
+
 
 
 router.put('/', upload.single('profileImg'), async (req, res) => {
