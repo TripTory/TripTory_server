@@ -93,7 +93,7 @@ router.get('/:diaryId', async(req, res) => {
     }
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ success: false, message: '해당 일기를 찾을 수 없습니다.' });
+    return res.status(500).json({ success: false, message: '서버 오류' });
   }
 });
 
@@ -124,14 +124,14 @@ router.post('/', upload.array('images', 10), async (req, res) => {
               const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
               const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
               await img.save(file.buffer);
-              diary.img.push({ imgpath: img.publicUrl(), tag: tags });
+              diary.img.push({ imgpath: file.originalname, tag: tags });
             }   
           }
 
           await diary.save(); // 여행 객체 저장
           
           console.log('일기 생성 완료');
-          return res.status(200).json({ success: true, message: '일기 생성 완료', diaryInfo: diary});
+          return res.status(200).json({ success: true, message: '일기 생성 완료', diaryid: diary._id });
         } else {
           console.log('사용자를 찾을 수 없습니다.');
           return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
@@ -179,7 +179,7 @@ router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
               const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
               const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
               await img.save(file.buffer);
-              diary.img.push({ imgpath: img.publicUrl(), tag: tags });
+              diary.img.push({ imgpath: file.originalname, tag: tags });
             }
           }
           
