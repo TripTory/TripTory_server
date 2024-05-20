@@ -117,12 +117,14 @@ router.post('/', upload.array('images', 10), async (req, res) => {
             userId: [user._id]
           });
 
-          const files = req.files;
-          for (const file of files) {
-            const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
-            const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
-            await img.save(file.buffer);
-            diary.img.push({ imgpath: img.publicUrl(), tag: tags });
+          if(req.files){
+            const files = req.files;
+            for (const file of files) {
+              const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
+              const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
+              await img.save(file.buffer);
+              diary.img.push({ imgpath: img.publicUrl(), tag: tags });
+            }   
           }
 
           await diary.save(); // 여행 객체 저장
@@ -170,12 +172,14 @@ router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
 
           diary.img = [];
 
-          const imgfiles = req.files;
-          for (const file of imgfiles) {
-            const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
-            const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
-            await img.save(file.buffer);
-            diary.img.push({ imgpath: img.publicUrl(), tag: tags });
+          if(req.files){
+            const imgfiles = req.files;
+            for (const file of imgfiles) {
+              const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
+              const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
+              await img.save(file.buffer);
+              diary.img.push({ imgpath: img.publicUrl(), tag: tags });
+            }
           }
           
           await diary.save();

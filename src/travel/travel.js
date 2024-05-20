@@ -160,7 +160,7 @@ router.put('/invite', async (req, res) => {
           await travel.save(); // 여행 객체 저장
   
           console.log('사용자 초대 완료');
-          return res.status(200).json({ success: true, message: '사용자 초대 완료' });
+          return res.status(200).json({ success: true, message: '사용자 초대 완료', travel });
 
         } else {
           console.log('초대할 사용자를 찾을 수 없습니다.');
@@ -215,20 +215,23 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           res.status(500).json({ success: false, message: '여행 대표 사진 변경에 실패했습니다.' });
           }
         }
+       
   
-        const updatetravel = await Travel.findByIdAndUpdate(req.params.travelid, {
+        await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
           startdate: req.body.startdate,
           enddate: req.body.enddate,
-          location: req.body.location,
           travelimg: TravelImgPath,
           invited: [user._id] // 초대된 사용자 배열에 현재 사용자 추가
         }, {new: true} );
 
-        await updatetravel.save();
+        if(req.body.location){
+          travel.location = { ...travel.location, ...req.body.location };
+          await travel.save();
+        }
         
         console.log('여행 수정 완료');
-        return res.status(200).json({ success: true, travel: updatetravel });
+        return res.status(200).json({ success: true, travel });
   
       } else {
         console.log('해당 여행을 찾을 수 없습니다.');
