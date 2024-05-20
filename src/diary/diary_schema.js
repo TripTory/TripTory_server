@@ -28,6 +28,10 @@ const diarySchema = mongoose.Schema({
     userId: {
         type: mongoose.Schema.ObjectId,
         ref: 'User'
+    },
+    userName: {
+        type: String,
+        required: true
     }
 }, { versionKey: false });
 

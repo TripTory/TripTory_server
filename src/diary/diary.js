@@ -114,7 +114,8 @@ router.post('/', upload.array('images', 10), async (req, res) => {
             content: req.body.content,
             date: req.body.date,
             travel: [travel._id],
-            userId: [user._id]
+            userId: [user._id],
+            userName: user.name
           });
 
           if(req.files){
