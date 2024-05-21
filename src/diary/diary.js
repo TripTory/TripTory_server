@@ -148,9 +148,14 @@ router.get('/:diaryId', async(req, res) => {
         }
       }
 
+      const diaryObj = diary.toObject();
+      const { img, ...diaryinfo } = diaryObj;
+
+      console.log(diaryinfo);
+
       return res.status(200).json({
         success: true,
-        diary,
+        diaryinfo,
         diaryImgUrl,
         userUrl
       });
