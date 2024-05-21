@@ -36,16 +36,16 @@ async function getSignedUrl(travel, res) {
     expires: Date.now() + 60 * 1000, // 1분 동안 유효
   };
 
-  bucket.file(`travel/${travel._id}`).getSignedUrl(options, (err, url) => {
-    if (err) {
+  try {
+    const [travelurl] = await bucket.file(`travel/${travel._id}`).getSignedUrl(options);
+    return travelurl;
+    
+  } catch (err) {
       console.error('이미지 URL 생성 실패:', err);
       return res.status(500).json({ success: false, message: '이미지 URL 생성 실패' });
-    } 
-    return(url);
-    
-  });
-
+  } 
 }
+
 //user profile img 받아오기
 async function getSignedUrl_user(userId) {
   const options = {
@@ -68,17 +68,13 @@ router.get('/', async (req, res) => {
   try {
     if (req.session && req.session.userId) {
       const travels = await Travel.find({ 'invited.user': req.session.userId });
-      console.log('id: ', req.session.userId);
-      console.log("tt: ", travels);
       
       if (travels.length > 0) { // 여행 목록이 비어있지 않은지 확인
         const travelUrls = [];
         for (const travel of travels) {
-          const travelurl = await getSignedUrl(travel, res);
+          travelurl = await getSignedUrl(travel, res);
           travelUrls.push(travelurl);
         }
-        // travelurl = await getSignedUrl(travel, res);
-        console.log("travelUrls: ", travelUrls);
         return res.status(200).json({ success: true, travels, travelUrls });
 
       } else {
@@ -274,7 +270,6 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           res.status(500).json({ success: false, message: '여행 대표 사진 변경에 실패했습니다.' });
           }
         }
-       
   
         await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
