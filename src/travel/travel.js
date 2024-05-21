@@ -164,9 +164,8 @@ router.post('/', upload.single('image'),async (req, res) => {
           enddate: req.body.enddate,
           location: req.body.location,
           travelimg: null, // 이미지 경로 저장
-          invited: [user._id], // 초대된 사용자 배열에 현재 사용자 추가
-          ivtoken: ivtoken,
-          userName: [user.name],  // 새 사용자 이름 추가
+          invited: [{ user: user._id, name: user.name }], // 초대된 사용자 배열에 현재 사용자 추가
+          ivtoken: ivtoken // 새 사용자 이름 추가
         });
         //travel.userName = user.name;
 
@@ -232,8 +231,8 @@ router.put('/invite', async (req, res) => {
             return res.status(400).json({ success: false, message: '이미 초대된 사용자입니다.' });
           }
 
-          travel.invited.push(user._id); // 초대된 사용자 배열에 추가
-          travel.userName.push(user.name); // 사용자 이름 추가
+          travel.invited.push({user: user._id, name: user.name}); // 초대된 사용자 배열에 추가
+          //travel.userName.push(user.name); // 사용자 이름 추가
           
           await travel.save(); // 여행 객체 저장
   
