@@ -41,14 +41,8 @@ async function getSignedUrl(travel, res) {
       console.error('이미지 URL 생성 실패:', err);
       return res.status(500).json({ success: false, message: '이미지 URL 생성 실패' });
     } 
-    // travel 객체를 단순한 JavaScript 객체로 변환하고 필요한 필드만 추출
-    const travelObj = travel.toObject();
-    const travelInfo = travelObj; // 숨겨야 하는 민감 정보 없음
-    console.log("t_info: ", travelInfo);
-    console.log("url: ", url);
     return(url);
-    // return res.status(200).json({ success: true, travelInfo, url });
-  
+    
   });
 
 }
@@ -60,22 +54,14 @@ async function getSignedUrl_user(userId) {
     expires: Date.now() + 60 * 1000, // 1분 동안 유효
   };
 
-  bucket.file(`user/${user._id}`).getSignedUrl_user(options, (err, profileurl) => {
-    if (err) {
+  try {
+    const [profileurl] = await bucket.file(`user/${userId}`).getSignedUrl(options);
+    return profileurl;
+  } catch (err) {
       console.error('프로필 URL 생성 실패:', err);
       return res.status(500).json({ success: false, message: '프로필 URL 생성 실패' });
-    } 
-    // travel 객체를 단순한 JavaScript 객체로 변환하고 필요한 필드만 추출
-    // const userObj = travel.toObject();
-    // const userInfo = travelObj; // 숨겨야 하는 민감 정보 없음
-    console.log("profileUrl: ", profileurl);
-    return(profileurl);
-    // return res.status(200).json({ success: true, travelInfo, url });
-  
-  });
-}
-
-
+  } 
+};
 
 router.get('/', async (req, res) => {
   console.log("여행 목록 요청");
@@ -92,6 +78,7 @@ router.get('/', async (req, res) => {
           travelUrls.push(travelurl);
         }
         // travelurl = await getSignedUrl(travel, res);
+        console.log("travelUrls: ", travelUrls);
         return res.status(200).json({ success: true, travels, travelUrls });
 
       } else {
@@ -113,28 +100,23 @@ router.get('/:travelid', async (req, res) => {
   try {
     const travel = await Travel.findById(req.params.travelid);
     if (travel) { // 특정 여행을 찾았는지 확인
-      travelurl = await getSignedUrl(travel, res);
-      //profileurl = await getUserUrl(user, res);
+      travelurl = await getSignedUrl(travel, res);  // 여행 대표이미지 url
+      
+      let invited_profile =[];  // 여행 초대된 사람들 프로필사진
 
-      // 사용자 프로필 이미지 포함
-      const usersWithProfileImg = await Promise.all(travel.invited.map(async userId => {
-        const user = await User.findById(userId);
-        profileurl = await getSignedUrl_user(userId);
-        return {
-          userId: user._id,
-          profileimg: user.profileimg,
-          userUrl: profileurl
-        };
+      // 사용자 프로필 이미지 얻기
+      const usersWithProfileImg = await Promise.all(travel.invited.map(async invited => {
+        profileurl = await getSignedUrl_user(invited.user);
+        invited_profile.push({user: invited.user, url: profileurl});
+
       }));
-      console.log("userprof: ",usersWithProfileImg);
+      console.log("invited_profile: ", invited_profile);      
 
-      return res.status(200).json({
+      return res.status(200).json({ // 특정 여행 정보 + 대표사진 + 유저 프로필(id + 사진url)
         success: true,
-        travelurl,
-        userprofile: usersWithProfileImg
-        // travel: {
-        //   userprofile: usersWithProfileImg
-        // },
+        travel, 
+        travelurl,  
+        invited_profile
       });
     } else {
       console.log('해당 여행을 찾을 수 없습니다.');
@@ -195,11 +177,6 @@ router.post('/', upload.single('image'),async (req, res) => {
             return res.status(500).json({ success: false, message: '여행 대표 사진 업로드에 실패했습니다.' });
           }
         }
-
-        // 여행에 참여한 사용자의 이름을 userName 배열에 추가
-        // const users = await User.find({ _id: { $in: travel.invited } }); // 초대된 사용자들 찾기
-        // const userNames = users.map(user => user.name); // 사용자들의 이름 추출
-        // travel.userName = userNames; // 사용자 이름들을 userName 필드에 할당
        
         const savedTravel = await travel.save(); // 여행 객체 저장
         
@@ -239,7 +216,6 @@ router.put('/invite', async (req, res) => {
           }
 
           travel.invited.push({user: user._id, name: user.name}); // 초대된 사용자 배열에 추가
-          //travel.userName.push(user.name); // 사용자 이름 추가
           
           await travel.save(); // 여행 객체 저장
   
@@ -305,9 +281,6 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           startdate: req.body.startdate,
           enddate: req.body.enddate,
           travelimg: imageName, // MongoDB에 이미지 이름 저장
-          // invited: [user._id], // 초대된 사용자 배열에 현재 사용자 추가
-          // userName: user.name,  // 새 사용자 이름 추가
-          // userImg: user.profileimg, // 새 사용자 img 추가
         }, {new: true} );
 
         if(req.body.location){
