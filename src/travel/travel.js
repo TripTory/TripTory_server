@@ -81,10 +81,17 @@ router.get('/', async (req, res) => {
   console.log("여행 목록 요청");
   try {
     if (req.session && req.session.userId) {
-      const travels = await Travel.find({ invited: req.session.userId });
+      const travels = await Travel.find({ 'invited.user': req.session.userId });
+      console.log('id: ', req.session.userId);
+      console.log("tt: ", travels);
       
       if (travels.length > 0) { // 여행 목록이 비어있지 않은지 확인
-        travelurl = await getSignedUrl(travel, res);
+        const travelUrls = [];
+        for (const travel of travels) {
+          const travelurl = await getSignedUrl(travel, res);
+          travelUrls.push(travelurl);
+        }
+        // travelurl = await getSignedUrl(travel, res);
         return res.status(200).json({ success: true, travels, travelurl });
 
       } else {
