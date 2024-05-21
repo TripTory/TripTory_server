@@ -63,7 +63,8 @@ router.get('/callback', async (req, res) => {
         req.session.userId = user._id;
         res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000 });
 
-        res.json({ message: '회원가입 성공', email: kakaoUserData.kakao_account.email });
+        //res.json({ message: '회원가입 성공', email: kakaoUserData.kakao_account.email });
+        res.redirect(`${process.env.FRONT_URL}/agree`);
       }
       else {
         req.session.userId = user._id;

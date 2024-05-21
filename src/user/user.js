@@ -164,7 +164,7 @@ router.put('/', upload.single('profileImg'), async (req, res) => {
 
         if (updateuser) {
           console.log('사용자 정보 수정 완료');
-          return res.status(200).json({ success: true, user: updateuser });
+          return res.status(200).json({ success: true, message: '사용자 정보 수정 성공' });
         } else {
           console.log('사용자 정보 수정 실패');
           return res.status(400).json({ success : false, message : '사용자 정보 수정 실패'});
