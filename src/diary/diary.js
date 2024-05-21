@@ -32,6 +32,38 @@ const bucket = storage.bucket(bucketName);
 const multerStorage = multer.memoryStorage();
 const upload = multer({ storage: multerStorage });
 
+async function getSignedUrl_diary(diaryId, img) {
+  const options = {
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 60 * 1000, // 1분 동안 유효
+  };
+
+  try {
+    const [url] = await bucket.file(`diary/${diaryId}/${img.imgpath}`).getSignedUrl(options);
+    return url;
+  } catch (err) {
+    console.error('이미지 URL 생성 실패:', err);
+    return "";
+  }
+}
+
+async function getSignedUrl_user(userId) {
+  const options = {
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 60 * 1000, // 1분 동안 유효
+  };
+
+  try {
+    const [url] = await bucket.file(`user/${userId}`).getSignedUrl(options);
+    return url;
+  } catch (err) {
+    console.error('이미지 URL 생성 실패:', err);
+    return "";
+  }
+}
+
 router.get('/', async(req, res) => {
   console.log('일기 목록 요청');
   try {
@@ -39,9 +71,20 @@ router.get('/', async(req, res) => {
       const diarys = await Diary.find({ userId: req.session.userId });
 
       if(diarys.length > 0){
+
+        let diarys_info = []
+
+        for(const diary of diarys) {
+          if(diary.img[0]){
+            const url = await getSignedUrl_diary(diary._id, diary.img[0]);
+            diarys_info.push({ diary, url });
+          }
+          else diarys_info.push({ diary, url: "" });
+        }  
+
         return res.status(200).json({
           success: true,
-          diarys
+          diarys_info,
         });
       } else {
         console.log('해당 사용자의 일기 목록을 찾을 수 없습니다.');
@@ -63,9 +106,20 @@ router.get('/travel/:travelId', async(req, res) => {
     const diarys = await Diary.find({ travel: req.params.travelId });
 
     if(diarys.length > 0){
+
+      let diarys_info = []
+
+      for(const diary of diarys) {
+        if(diary.img[0]){
+          const url = await getSignedUrl_diary(diary._id, diary.img[0]);
+          diarys_info.push({ diary, url });
+        }
+        else diarys_info.push({ diary, url: "" });
+      }
+
       return res.status(200).json({
         success: true,
-        diarys
+        diarys_info
       });
     } else {
       console.log('해당 여행의 일기 목록을 찾을 수 없습니다.');
@@ -83,9 +137,22 @@ router.get('/:diaryId', async(req, res) => {
     const diary = await Diary.findById(req.params.diaryId);
 
     if(diary){
+
+      const userUrl = await getSignedUrl_user(diary.userId);
+
+      let diaryImgUrl = []
+      if(diary.img){
+        for(const img of diary.img){
+          const url = await getSignedUrl_diary(diary._id, img);
+          diaryImgUrl.push(url);
+        }
+      }
+
       return res.status(200).json({
         success: true,
-        diary
+        diary,
+        diaryImgUrl,
+        userUrl
       });
     } else {
       console.log('해당 일기를 찾을 수 없습니다.');
@@ -93,7 +160,7 @@ router.get('/:diaryId', async(req, res) => {
     }
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ success: false, message: '해당 일기를 찾을 수 없습니다.' });
+    return res.status(500).json({ success: false, message: '서버 오류' });
   }
 });
 
@@ -124,14 +191,14 @@ router.post('/', upload.array('images', 10), async (req, res) => {
               const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
               const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
               await img.save(file.buffer);
-              diary.img.push({ imgpath: img.publicUrl(), tag: tags });
+              diary.img.push({ imgpath: file.originalname, tag: tags });
             }   
           }
 
           await diary.save(); // 여행 객체 저장
           
           console.log('일기 생성 완료');
-          return res.status(200).json({ success: true, message: '일기 생성 완료', diaryInfo: diary});
+          return res.status(200).json({ success: true, message: '일기 생성 완료', diaryid: diary._id });
         } else {
           console.log('사용자를 찾을 수 없습니다.');
           return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' });
@@ -179,7 +246,7 @@ router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
               const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
               const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
               await img.save(file.buffer);
-              diary.img.push({ imgpath: img.publicUrl(), tag: tags });
+              diary.img.push({ imgpath: file.originalname, tag: tags });
             }
           }
           
