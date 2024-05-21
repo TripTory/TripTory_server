@@ -150,12 +150,22 @@ router.post('/invite', async (req, res) => {
         return res.status(400).json({ success: false, message: 'ivtoken이 필요합니다.' });
       }
 
+      const user = await User.findById(req.session.userId);
       const travel = await Travel.findOne({ ivtoken: req.body.ivtoken });      
       if (travel){
-        console.log('여행 ID:', travel._id);
-        const auth = await User.findById(travel.invited[0]);
+        if(user){
+          console.log('초대할 사용자 ID:', user._id);
+  
+          if (travel.invited.includes(user._id)) {
+            console.log('이미 초대된 사용자입니다.');
+            return res.status(400).json({ success: false, message: '이미 초대된 사용자입니다.' });
+          } 
 
-        return res.status(200).json({ success: true, auth: auth.name });
+          console.log('여행 ID:', travel._id);
+          const auth = await User.findById(travel.invited[0]);
+
+          return res.status(200).json({ success: true, auth: auth.name });
+        } 
       } else {
         console.log('일차하는 여행을 찾을 수 없습니다.');
         return res.status(404).json({ success: false, message: '일치하는 여행을 찾을 수 없습니다.'});
