@@ -140,7 +140,7 @@ router.post('/', upload.single('image'),async (req, res) => {
   }
 });
 
-router.get('/invite/?', async (req, res) => {
+router.put('/invite/?', async (req, res) => {
   console.log("여행 초대 요청");
   try {
     if (req.session && req.session.userId){
