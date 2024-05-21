@@ -22,21 +22,17 @@ const travelSchema = mongoose.Schema({
       type: String
    },
    invited: {
-       type: [mongoose.Schema.Types.ObjectId],
-       ref: 'User' // User 모델과 연결
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: 'User' // User 모델과 연결
    },
    ivtoken: {
       type: String,
       require: true
    },
    userName: {
-      type: String,
+      type: [String],
       ref: 'User'
-   },
-   userImg: {
-      type: String,
-      ref: 'User'
-  }
+   }
 
 }, { versionKey: false });
 
