@@ -92,7 +92,7 @@ router.get('/', async (req, res) => {
           travelUrls.push(travelurl);
         }
         // travelurl = await getSignedUrl(travel, res);
-        return res.status(200).json({ success: true, travels, travelurl });
+        return res.status(200).json({ success: true, travels, travelUrls });
 
       } else {
         console.log('해당 사용자의 여행 목록을 찾을 수 없습니다.');
