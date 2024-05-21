@@ -140,8 +140,38 @@ router.post('/', upload.single('image'),async (req, res) => {
   }
 });
 
-router.put('/invite', async (req, res) => {
+router.get('/invite/?', async (req, res) => {
   console.log("여행 초대 요청");
+  try {
+    if (req.session && req.session.userId){
+
+      const { ivtoken } = req.body;
+      if (!ivtoken) {
+        return res.status(400).json({ success: false, message: 'ivtoken이 필요합니다.' });
+      }
+
+      const travel = await Travel.findOne({ ivtoken: req.body.ivtoken });      
+      if (travel){
+        console.log('여행 ID:', travel._id);
+        const auth = await User.findById(travel.invited[0]);
+
+        return res.status(200).json({ success: true, auth: auth.name });
+      } else {
+        console.log('일차하는 여행을 찾을 수 없습니다.');
+        return res.status(404).json({ success: false, message: '일치하는 여행을 찾을 수 없습니다.'});
+      }     
+    } else {
+      console.log('로그인이 필요합니다.');
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });  
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: '서버 오류' });
+  }
+});
+
+router.put('/invite', async (req, res) => {
+  console.log("여행 초대 수락");
   try {
     if (req.session && req.session.userId){
       const user = await User.findById(req.session.userId);
