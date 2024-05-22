@@ -29,14 +29,54 @@ const bucket = storage.bucket(bucketName);
 const multerStorage = multer.memoryStorage();
 const upload = multer({ storage: multerStorage });
 
+async function getSignedUrl(travel, res) {
+  const options = {
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 60 * 1000, // 1분 동안 유효
+  };
+
+  try {
+    const [travelurl] = await bucket.file(`travel/${travel._id}`).getSignedUrl(options);
+    return travelurl;
+    
+  } catch (err) {
+      console.error('이미지 URL 생성 실패:', err);
+      return res.status(500).json({ success: false, message: '이미지 URL 생성 실패' });
+  } 
+}
+
+//user profile img 받아오기
+async function getSignedUrl_user(userId) {
+  const options = {
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 60 * 1000, // 1분 동안 유효
+  };
+
+  try {
+    const [profileurl] = await bucket.file(`user/${userId}`).getSignedUrl(options);
+    return profileurl;
+  } catch (err) {
+      console.error('프로필 URL 생성 실패:', err);
+      return res.status(500).json({ success: false, message: '프로필 URL 생성 실패' });
+  } 
+};
+
 router.get('/', async (req, res) => {
   console.log("여행 목록 요청");
   try {
     if (req.session && req.session.userId) {
-      const travels = await Travel.find({ invited: req.session.userId });
-
+      const travels = await Travel.find({ 'invited.user': req.session.userId });
+      
       if (travels.length > 0) { // 여행 목록이 비어있지 않은지 확인
-        return res.status(200).json({ success: true, travels });
+        const travelUrls = [];
+        for (const travel of travels) {
+          travelurl = await getSignedUrl(travel, res);
+          travelUrls.push(travelurl);
+        }
+        return res.status(200).json({ success: true, travels, travelUrls });
+
       } else {
         console.log('해당 사용자의 여행 목록을 찾을 수 없습니다.');
         return res.status(404).json({ success: false, message: '해당 사용자의 여행 목록을 찾을 수 없습니다.' });
@@ -56,9 +96,23 @@ router.get('/:travelid', async (req, res) => {
   try {
     const travel = await Travel.findById(req.params.travelid);
     if (travel) { // 특정 여행을 찾았는지 확인
-      return res.status(200).json({
+      travelurl = await getSignedUrl(travel, res);  // 여행 대표이미지 url
+      
+      let invited_profile =[];  // 여행 초대된 사람들 프로필사진
+
+      // 사용자 프로필 이미지 얻기
+      const usersWithProfileImg = await Promise.all(travel.invited.map(async invited => {
+        profileurl = await getSignedUrl_user(invited.user);
+        invited_profile.push({user: invited.user, url: profileurl});
+
+      }));
+      console.log("invited_profile: ", invited_profile);      
+
+      return res.status(200).json({ // 특정 여행 정보 + 대표사진 + 유저 프로필(id + 사진url)
         success: true,
-        travel,
+        travel, 
+        travelurl,  
+        invited_profile
       });
     } else {
       console.log('해당 여행을 찾을 수 없습니다.');
@@ -95,10 +149,11 @@ router.post('/', upload.single('image'),async (req, res) => {
           enddate: req.body.enddate,
           location: req.body.location,
           travelimg: null, // 이미지 경로 저장
-          invited: [user._id], // 초대된 사용자 배열에 현재 사용자 추가
-          ivtoken: ivtoken
+          invited: [{ user: user._id, name: user.name }], // 초대된 사용자 배열에 현재 사용자 추가
+          ivtoken: ivtoken // 새 사용자 이름 추가
         });
-        
+        //travel.userName = user.name;
+
         // 여행 대표 이미지 업로드
         if (req.file) {
           try {
@@ -109,9 +164,8 @@ router.post('/', upload.single('image'),async (req, res) => {
             // GCS에 이미지 업로드
             await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
 
-            // MongoDB TravelImgPath에 이미지 경로 저장
-            TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
-            travel.travelimg = TravelImgPath;
+            // MongoDB에 이미지 이름 저장
+            travel.travelimg = imageName; // TravelImgPath(URL) => imageName(_id)
             console.log('여행 대표 사진 업로드 성공');
 
           } catch (error) {
@@ -190,13 +244,15 @@ router.put('/invite', async (req, res) => {
         console.log('여행 ID:', travel._id);
         if (user) {
           console.log('초대할 사용자 ID:', user._id);
+          console.log('초대할 사용자 name:', user.name);
   
           if (travel.invited.includes(user._id)) {
             console.log('이미 초대된 사용자입니다.');
             return res.status(400).json({ success: false, message: '이미 초대된 사용자입니다.' });
           }
-  
-          travel.invited.push(user._id); // 초대된 사용자 배열에 추가
+
+          travel.invited.push({user: user._id, name: user.name}); // 초대된 사용자 배열에 추가
+          
           await travel.save(); // 여행 객체 저장
   
           console.log('사용자 초대 완료');
@@ -244,9 +300,8 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           // GCS에 이미지 업로드
           await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
 
-          // MongoDB에 이미지 경로 저장
-          const TravelImgPath = `https://storage.googleapis.com/${bucketName}/travel/${imageName}`;
-          travel.travelimg = TravelImgPath;
+          // MongoDB에 이미지 이름 저장
+          travel.travelimg = imageName;
           await travel.save();  
 
           console.log('여행 대표 사진 변경 성공');
@@ -255,14 +310,12 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           res.status(500).json({ success: false, message: '여행 대표 사진 변경에 실패했습니다.' });
           }
         }
-       
   
         await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
           startdate: req.body.startdate,
           enddate: req.body.enddate,
-          travelimg: TravelImgPath,
-          invited: [user._id] // 초대된 사용자 배열에 현재 사용자 추가
+          travelimg: imageName, // MongoDB에 이미지 이름 저장
         }, {new: true} );
 
         if(req.body.location){
