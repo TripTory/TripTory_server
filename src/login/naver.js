@@ -96,10 +96,14 @@ router.get('/callback', async (req, res) => {
         //res.json({ message: '로그인 성공', email: naveruserData.email });
         res.redirect(`${process.env.FRONT_URL}/home`);
       }
-
     } catch (error) {
-      console.error('사용자 정보 요청 실패:', error);
-      res.status(500).redirect(`${process.env.FRONT_URL}/login`); // 오류 발생 시 로그인 화면으로 리다이렉트
+      if (error.code === 11000 && error.keyPattern.email) {
+        // 중복된 이메일 주소로 인한 오류 (kakao에 구글,네이버 이메일로 가입한 경우 발생)
+        return res.status(400).json({ error: '이미 가입된 이메일입니다. 다른 방식으로 로그인해주세요.' });
+      } else {
+        console.error('사용자 정보 요청 실패:', error);
+        res.status(500).send('사용자 정보 요청 실패');
+      }    
     }
   } catch (error) {
     console.error('인증 실패:', error);
