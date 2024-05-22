@@ -18,7 +18,7 @@ router.get('/', async (req, res) => {
     try {
         const scope = encodeURIComponent('profile email');
         const authorizationUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=${process.env.GOOGLE_ID}&redirect_uri=${process.env.GOOGLE_URI}&scope=${scope}&state=state_parameter_passthrough_value`;
-        res.json(authorizationUrl);
+        res.json({ authorizationUrl });
       } catch (error) {
         console.error("Failed to generate Naver OAuth authorization URL:", error);
         res.status(500).json({ error: "Failed to generate authorization URL" });
@@ -85,7 +85,6 @@ router.get('/callback', async (req, res) => {
         } else {
             req.session.userId = user._id;
             res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000 });
-
 
             await User.findByIdAndUpdate(user._id, {
                 oauthAccessToken: accessToken
