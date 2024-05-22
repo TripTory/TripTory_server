@@ -16,13 +16,19 @@ const corsOptions = {
 router.use(cors(corsOptions));
 
 router.get('/', (req, res) => {
-  const oauthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_ID}&redirect_uri=${process.env.KAKAO_URI}&response_type=code`;
-  res.redirect(oauthUrl);
+  try {
+    // 카카오 인증 URL 생성 
+    const authorizationUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_ID}&redirect_uri=${process.env.KAKAO_URI}&response_type=code`;
+    //res.redirect(oauthUrl);
+    res.json({ authorizationUrl });
+  } catch (error) {
+    console.error("Failed to generate Naver OAuth authorization URL:", error);
+    res.status(500).json({ error: "Failed to generate authorization URL" });
+  }
 });
 
 router.get('/callback', async (req, res) => {
   const { code } = req.query;
-
   try {
     // 토큰 요청
     const tokenResponse = await axios.post('https://kauth.kakao.com/oauth/token', null, {
@@ -48,7 +54,7 @@ router.get('/callback', async (req, res) => {
       const kakaoUserData = userInfoResponse.data;
 
       let user = await User.findOne({ oauthId: kakaoUserData.id });
- 
+
       if (!user) {
         user = new User({
           oauthId: kakaoUserData.id,
@@ -74,11 +80,12 @@ router.get('/callback', async (req, res) => {
           oauthAccessToken: accessToken
         }, { new: true });
 
-        res.json({ message: '로그인 성공', email: kakaoUserData.kakao_account.email });
+        //res.json({ message: '로그인 성공', email: kakaoUserData.kakao_account.email });
+        res.redirect(`${process.env.FRONT_URL}/home`);
       }
     } catch (error) {
       if (error.code === 11000 && error.keyPattern.email) {
-        // 중복된 이메일 주소로 인한 오류
+        // 중복된 이메일 주소로 인한 오류 (kakao에 구글,네이버 이메일로 가입한 경우 발생)
         return res.status(400).json({ error: '이미 가입된 이메일입니다. 다른 방식으로 로그인해주세요.' });
       } else {
         console.error('사용자 정보 요청 실패:', error);
