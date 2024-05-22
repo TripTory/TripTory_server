@@ -29,6 +29,11 @@ const bucket = storage.bucket(bucketName);
 const multerStorage = multer.memoryStorage();
 const upload = multer({ storage: multerStorage });
 
+// 사용자가 이미 초대된 상태인지 확인하는 함수
+const isUserAlreadyInvited = (invitedArray, userId) => {
+  return invitedArray.some(invited => invited.user.equals(userId));
+};
+
 async function getSignedUrl(travel, res) {
   const options = {
     version: 'v4',
@@ -207,18 +212,16 @@ router.post('/invite', async (req, res) => {
       const user = await User.findById(req.session.userId);
       const travel = await Travel.findOne({ ivtoken: req.body.ivtoken });      
       if (travel){
+        console.log('여행 ID:', travel._id);
         if(user){
           console.log('초대할 사용자 ID:', user._id);
   
-          if (travel.invited.includes(user._id)) {
+          if (isUserAlreadyInvited(travel.invited, user._id)) {
             console.log('이미 초대된 사용자입니다.');
             return res.status(400).json({ success: false, message: '이미 초대된 사용자입니다.' });
           } 
 
-          console.log('여행 ID:', travel._id);
-          const auth = await User.findById(travel.invited[0]);
-
-          return res.status(200).json({ success: true, auth: auth.name });
+          return res.status(200).json({ success: true, travelid: travel._id, auth: travel.invited[0].name });
         } 
       } else {
         console.log('일차하는 여행을 찾을 수 없습니다.');
@@ -239,25 +242,18 @@ router.put('/invite', async (req, res) => {
   try {
     if (req.session && req.session.userId){
       const user = await User.findById(req.session.userId);
-      const travel = await Travel.findOne({ ivtoken: req.body.ivtoken }); // 여행 토큰으로 여행을 검색
+      const travel = await Travel.findById(req.body.travelid); // 여행 토큰으로 여행을 검색
       if (travel) {
         console.log('여행 ID:', travel._id);
         if (user) {
           console.log('초대할 사용자 ID:', user._id);
-          console.log('초대할 사용자 name:', user.name);
-  
-          if (travel.invited.includes(user._id)) {
-            console.log('이미 초대된 사용자입니다.');
-            return res.status(400).json({ success: false, message: '이미 초대된 사용자입니다.' });
-          }
 
           travel.invited.push({user: user._id, name: user.name}); // 초대된 사용자 배열에 추가
           
           await travel.save(); // 여행 객체 저장
   
           console.log('사용자 초대 완료');
-          return res.status(200).json({ success: true, message: '사용자 초대 완료', travel });
-
+          return res.status(200).json({ success: true, message: '사용자 초대 완료' });
         } else {
           console.log('초대할 사용자를 찾을 수 없습니다.');
           return res.status(404).json({ success: false, message: '초대할 사용자를 찾을 수 없습니다.' });
