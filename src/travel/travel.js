@@ -277,18 +277,27 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
   try {
     if (req.session && req.session.userId){
       const travel = await Travel.findById(req.params.travelid);
+
       if(travel){
         console.log('수정할 여행 ID:', travel._id);
-  
         const user = await User.findById(req.session.userId);
-        if (!travel.invited.user.includes(user._id)) {
-          console.log('여행에 대한 권한이 없습니다.');
-          return res.status(403).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
+        console.log('수정할 user ID:', user._id);
+        console.log('invited.user:', travel.invited.user);
+        //if (travel.invited.user!=user._id) {
+        if (travel.invited && Array.isArray(travel.invited)) {
+          const permission = travel.invited.some(invitedUser => {
+              return invitedUser.user.toString() === user._id.toString();
+          });
+          if (!permission) {
+            console.log('여행에 대한 권한이 없습니다.');
+            return res.status(403).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
+          }
         }
 
         // 여행 대표 이미지 업로드 
-        if (req.file) {
+        if (req.body.imgmodified) {
           try {
+          console.log(req.body.imgmodified);
           const TravelImgFile = req.file;
           const imageName = travel._id.toString(); // 클라이언트에서 전송한 이미지 이름을 추출합니다.
           const file = bucket.file(`travel/${imageName}`);    
@@ -298,6 +307,7 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
 
           // MongoDB에 이미지 이름 저장
           travel.travelimg = imageName;
+          travel.travelimg.push(imageName);
           await travel.save();  
 
           console.log('여행 대표 사진 변경 성공');
@@ -310,8 +320,8 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
         await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
           startdate: req.body.startdate,
-          enddate: req.body.enddate,
-          travelimg: imageName, // MongoDB에 이미지 이름 저장
+          enddate: req.body.enddate
+          //travelimg: imageName, // MongoDB에 이미지 이름 저장
         }, {new: true} );
 
         if(req.body.location){
