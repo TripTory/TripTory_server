@@ -281,7 +281,7 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
         console.log('수정할 여행 ID:', travel._id);
   
         const user = await User.findById(req.session.userId);
-        if (!travel.invited.includes(user._id)) {
+        if (!travel.invited.user.includes(user._id)) {
           console.log('여행에 대한 권한이 없습니다.');
           return res.status(403).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
         }
