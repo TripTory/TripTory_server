@@ -34,6 +34,7 @@ const isUserAlreadyInvited = (invitedArray, userId) => {
   return invitedArray.some(invited => invited.user.equals(userId));
 };
 
+// 프론트에 전달하기위한 임시 이미지 Url 생성
 async function getSignedUrl(travel, res) {
   const options = {
     version: 'v4',
@@ -64,7 +65,7 @@ async function getSignedUrl_user(userId) {
     return profileurl;
   } catch (err) {
       console.error('프로필 URL 생성 실패:', err);
-      return res.status(500).json({ success: false, message: '프로필 URL 생성 실패' });
+      return null;
   } 
 };
 
@@ -106,10 +107,16 @@ router.get('/:travelid', async (req, res) => {
       let invited_profile =[];  // 여행 초대된 사람들 프로필사진
 
       // 사용자 프로필 이미지 얻기
-      const usersWithProfileImg = await Promise.all(travel.invited.map(async invited => {
-        profileurl = await getSignedUrl_user(invited.user);
-        invited_profile.push({user: invited.user, url: profileurl});
-
+      await Promise.all(travel.invited.map(async invited => {
+        const users = await User.findById(invited.user);
+        if (!users.profileimg){
+          profileurl = null;
+          console.log(profileurl);
+        } else {
+          profileurl = await getSignedUrl_user(invited.user);
+        }
+          invited_profile.push({user: invited.user, url: profileurl});
+        
       }));
       console.log("invited_profile: ", invited_profile);      
 
@@ -308,6 +315,7 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
 
           console.log('여행 대표 사진 변경 성공');
         } 
+        console.log("img: ", TravelImgFile);
         // else {
         //   res.status(400).json({ success: false, message: '이미지가 업로드되지 않았습니다.' });
         // }
