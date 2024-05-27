@@ -277,41 +277,45 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
   try {
     if (req.session && req.session.userId){
       const travel = await Travel.findById(req.params.travelid);
+
       if(travel){
-        console.log('수정할 여행 ID:', travel._id);
-  
         const user = await User.findById(req.session.userId);
-        if (!travel.invited.user.includes(user._id)) {
-          console.log('여행에 대한 권한이 없습니다.');
-          return res.status(403).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
+
+        if (travel.invited && Array.isArray(travel.invited)) {
+          const permission = travel.invited.some(invitedUser => {
+              return invitedUser.user.toString() === user._id.toString();
+          });
+          if (!permission) {
+            console.log('여행에 대한 권한이 없습니다.');
+            return ('403: 여행에 대한 권한이 없습니다.' );
+          }
         }
 
-        // 여행 대표 이미지 업로드 
-        if (req.file) {
-          try {
-          const TravelImgFile = req.file;
-          const imageName = travel._id.toString(); // 클라이언트에서 전송한 이미지 이름을 추출합니다.
-          const file = bucket.file(`travel/${imageName}`);    
+        
+        const TravelImgFile = req.file;
+
+        if (TravelImgFile) {
+          const imageName = `${travel._id.toString()}`; // 이미지 이름 수정 (여러 이미지를 고려)
+          const file = bucket.file(`travel/${imageName}`);
 
           // GCS에 이미지 업로드
           await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
 
           // MongoDB에 이미지 이름 저장
-          travel.travelimg = imageName;
+          travel.travelimg = imageName; // 대표 이미지를 단일 문자열로 저장
+
           await travel.save();  
 
           console.log('여행 대표 사진 변경 성공');
-          } catch (error) {
-          console.error(error);
-          res.status(500).json({ success: false, message: '여행 대표 사진 변경에 실패했습니다.' });
-          }
-        }
+        } 
+        // else {
+        //   res.status(400).json({ success: false, message: '이미지가 업로드되지 않았습니다.' });
+        // }
   
         await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
           startdate: req.body.startdate,
-          enddate: req.body.enddate,
-          travelimg: imageName, // MongoDB에 이미지 이름 저장
+          enddate: req.body.enddate
         }, {new: true} );
 
         if(req.body.location){
@@ -320,19 +324,19 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
         }
         
         console.log('여행 수정 완료');
-        return res.status(200).json({ success: true, travel });
+        return (travel);
   
       } else {
         console.log('해당 여행을 찾을 수 없습니다.');
-        return res.status(404).json({ success : false, message : '해당 여행을 찾을 수 없습니다.' });
+        return ('404: 해당 여행을 찾을 수 없습니다.');
       }
     } else {
       console.log('로그인이 필요합니다.');
-      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+      return ('401:로그인이 필요합니다.' );
     }
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ success: false, message: '서버 오류' });
+    return ( '500: 서버 오류' );
   }
 });
 
@@ -344,21 +348,30 @@ router.delete('/:travelid', async (req, res) => {
 
       if(travel){
         console.log('삭제할 여행 ID:', travel._id);
-
         const user = await User.findById(req.session.userId);
-        if (!travel.invited.includes(user._id)) {
-          console.log('여행에 대한 권한이 없습니다.');
-          return res.status(403).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
+        console.log('수정할 user ID:', user._id);
+        console.log('유저들: ', travel.invited);
+
+        // 여행 수정 권한 판별 : array안에 현 사용자가 있으면 권한O
+        if (travel.invited && Array.isArray(travel.invited)) {
+          const permission = travel.invited.some(invitedUser => {
+              return invitedUser.user.toString() === user._id.toString();
+          });
+          if (!permission) {
+            console.log('여행에 대한 권한이 없습니다.');
+            return res.status(403).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
+          }
         }
 
         travel.invited = travel.invited.filter(userId => userId.toString() !== user._id.toString());
         console.log(travel.invited);
         await travel.save();
       
-        if (travel.invited.length === 0) {
-          // MongoDB에서 삭제
-          await Travel.findByIdAndDelete(travel._id);
-        }
+        
+        // MongoDB에서 삭제
+        await Travel.findByIdAndDelete(travel._id);
+        console.log("삭제할 여행: ", travel._id);
+        
 
         // Storage에서 삭제
         const [files] = await storage.bucket(bucketName).getFiles({
