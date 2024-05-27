@@ -287,34 +287,30 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
           });
           if (!permission) {
             console.log('여행에 대한 권한이 없습니다.');
-            return res.status(403).json({ success: false, message: '여행에 대한 권한이 없습니다.' });
+            return ('403: 여행에 대한 권한이 없습니다.' );
           }
         }
 
-        try {
-          const TravelImgFile = req.file;
+        
+        const TravelImgFile = req.file;
 
-          if (TravelImgFile) {
-            const imageName = `${travel._id.toString()}`; // 이미지 이름 수정 (여러 이미지를 고려)
-            const file = bucket.file(`travel/${imageName}`);
+        if (TravelImgFile) {
+          const imageName = `${travel._id.toString()}`; // 이미지 이름 수정 (여러 이미지를 고려)
+          const file = bucket.file(`travel/${imageName}`);
 
-            // GCS에 이미지 업로드
-            await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
+          // GCS에 이미지 업로드
+          await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
 
-            // MongoDB에 이미지 이름 저장
-            travel.travelimg = imageName; // 대표 이미지를 단일 문자열로 저장
+          // MongoDB에 이미지 이름 저장
+          travel.travelimg = imageName; // 대표 이미지를 단일 문자열로 저장
 
-            await travel.save();  
+          await travel.save();  
 
-            console.log('여행 대표 사진 변경 성공');
-          } else {
-            res.status(400).json({ success: false, message: '이미지가 업로드되지 않았습니다.' });
-          }
-        } catch (error) {
-          console.error(error);
-          res.status(500).json({ success: false, message: '여행 대표 사진 변경에 실패했습니다.' });
-        }
-
+          console.log('여행 대표 사진 변경 성공');
+        } 
+        // else {
+        //   res.status(400).json({ success: false, message: '이미지가 업로드되지 않았습니다.' });
+        // }
   
         await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
@@ -328,19 +324,19 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
         }
         
         console.log('여행 수정 완료');
-        return res.status(200).json({ success: true, travel });
+        return (travel);
   
       } else {
         console.log('해당 여행을 찾을 수 없습니다.');
-        return res.status(404).json({ success : false, message : '해당 여행을 찾을 수 없습니다.' });
+        return ('404: 해당 여행을 찾을 수 없습니다.');
       }
     } else {
       console.log('로그인이 필요합니다.');
-      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+      return ('401:로그인이 필요합니다.' );
     }
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ success: false, message: '서버 오류' });
+    return ( '500: 서버 오류' );
   }
 });
 
