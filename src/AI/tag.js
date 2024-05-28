@@ -85,7 +85,7 @@ router.get('/', async(req, res) => {
 })
 
 router.get('/:tagName', async(req, res) => {
-  console.log(`${tagName}에 대한 이미지 요청`)
+  console.log(`${req.params.tagName}에 대한 이미지 요청`)
   try {
     if (req.session && req.session.userId) {
       const diarys = await Diary.find({ userId: req.session.userId });
