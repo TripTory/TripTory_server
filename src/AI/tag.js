@@ -5,6 +5,8 @@ const session = require('express-session');
 const { Storage } = require('@google-cloud/storage');
 const multer = require('multer');
 const cors = require('cors');
+const axios = require('axios'); 
+require('dotenv').config();
 
 const { Diary} = require('../diary/diary_schema');
 
@@ -54,6 +56,7 @@ router.get('/', async(req, res) => {
         console.log("사용자 일기에 사진이 없습니다.")
         return res.status(404).json({ success: false, message: "사용자 일기에 사진이 없습니다." })
       }
+      const tagName = req.body.tag;
 
       if(!req.body.tag){
         console.log("각 태그별 대표 이미지 요청")
@@ -76,7 +79,7 @@ router.get('/', async(req, res) => {
       } 
       
       else {
-        const tagName = req.body.tag;
+        //const tagName = req.body.tag;
         console.log(`${tagName}에 대한 이미지 요청`)
 
         let images = [];
