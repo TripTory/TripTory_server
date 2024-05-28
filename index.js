@@ -64,6 +64,9 @@ app.use('/user', userAPI);
 
 const oauthAPI = require("./src/oauth");
 app.use('/oauth', oauthAPI);
+
+const tagAPI = require("./src/AI/tag");
+app.use('/tag', tagAPI)
   
 app.listen(port, () => console.log(`${port}포트입니다.`));
   
