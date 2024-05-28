@@ -18,7 +18,7 @@ app.use(express.json());
 //app.use(cors());
 // 클라이언트의 출처를 명시적으로 지정하고, 인증 정보를 허용
 const corsOptions = {
-    origin: 'http://localhost:3000', // 클라이언트의 출처
+    origin: process.env.FRONT_URL, // 클라이언트의 출처
     credentials: true // 인증 정보 허용
   };
   app.use(cors(corsOptions));
