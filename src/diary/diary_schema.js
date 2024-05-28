@@ -16,7 +16,6 @@ const diarySchema = mongoose.Schema({
     img: {
         type: [
             {
-                imgpath: String,
                 tag: [String],
             }
         ]

@@ -36,11 +36,11 @@ async function getSignedUrl_diary(diaryId, img) {
   const options = {
     version: 'v4',
     action: 'read',
-    expires: Date.now() + 60 * 1000, // 1분 동안 유효
+    expires: Date.now() + 15 * 60 * 1000, // 1분 동안 유효
   };
 
   try {
-    const [url] = await bucket.file(`diary/${diaryId}/${img.imgpath}`).getSignedUrl(options);
+    const [url] = await bucket.file(`diary/${diaryId}/${img._id}`).getSignedUrl(options);
     return url;
   } catch (err) {
     console.error('이미지 URL 생성 실패:', err);
@@ -194,9 +194,9 @@ router.post('/', upload.array('images', 10), async (req, res) => {
             const files = req.files;
             for (const file of files) {
               const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
-              const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
+              diary.img.push({ tag: tags });
+              const img = bucket.file(`diary/${diary._id}/${diary.img[diary.img.length - 1]._id}`);
               await img.save(file.buffer);
-              diary.img.push({ imgpath: file.originalname, tag: tags });
             }   
           }
 
@@ -235,23 +235,43 @@ router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
           console.log('일기에 대한 권한이 없습니다.');
           return res.status(403).json({ success: false, message: '일기에 대한 권한이 없습니다.' });
         }
-        
-        if(req.body.imgmodified){
-          console.log(req.body.imgmodified);
-          const [files] = await storage.bucket(bucketName).getFiles({
-            prefix: `diary/${diary._id}`,
-          });
-          await Promise.all(files.map(file => file.delete()));
 
-          diary.img = [];
+        if(req.body.imgmodified == "true"){
+          const originImages = req.body.originImage;
+
+          const extractImageId = url => {
+            const parts = url.split('/');
+            return parts[parts.length - 1].split('?')[0];
+          };
+          
+          const imageIds = originImages.split(',').map(extractImageId);
+          console.log(imageIds);
+
+          for (let i = diary.img.length - 1; i >= 0; i--) {
+            const image = diary.img[i];
+            if (!imageIds.includes(image._id.toString())) {
+              try {
+                // Google Cloud Storage에서 이미지 삭제
+                await storage.bucket(bucketName).file(`diary/${diary._id}/${image._id}`).delete();
+                console.log("이미지 삭제:", `diary/${diary._id}/${image._id}`);
+                
+                // diary.img 배열에서 이미지 삭제
+                diary.img.splice(i, 1);
+              } catch (error) {
+                console.error("이미지 삭제 중 오류 발생:", error);
+              }
+            }
+          }
+
+          console.log(diary.img);
 
           if(req.files){
-            const imgfiles = req.files;
-            for (const file of imgfiles) {
+            const files = req.files;
+            for (const file of files) {
               const tags = await ImageTagAnalyze.tagAndTranslateImage(file.buffer); // 수정된 부분
-              const img = storage.bucket(bucketName).file(`diary/${diary._id}/${file.originalname}`);
+              diary.img.push({ tag: tags });
+              const img = bucket.file(`diary/${diary._id}/${diary.img[diary.img.length - 1]._id}`);
               await img.save(file.buffer);
-              diary.img.push({ imgpath: file.originalname, tag: tags });
             }
           }
           
