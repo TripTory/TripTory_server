@@ -238,15 +238,13 @@ router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
 
         if(req.body.imgmodified == "true"){
           const originImages = req.body.originImage;
-    
-
 
           const extractImageId = url => {
             const parts = url.split('/');
             return parts[parts.length - 1].split('?')[0];
           };
           
-          const imageIds = originImages.map(extractImageId);
+          const imageIds = originImages.split(',').map(extractImageId);
           console.log(imageIds);
 
           for (let i = diary.img.length - 1; i >= 0; i--) {
