@@ -302,23 +302,24 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
         const TravelImgFile = req.file;
 
         if (TravelImgFile) {
-          const imageName = `${travel._id.toString()}`; // 이미지 이름 수정 (여러 이미지를 고려)
-          const file = bucket.file(`travel/${imageName}`);
+          try{
+            const imageName = `${travel._id.toString()}`; // 이미지 이름 수정 (여러 이미지를 고려)
+            const file = bucket.file(`travel/${imageName}`);
 
-          // GCS에 이미지 업로드
-          await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
+            // GCS에 이미지 업로드
+            await file.save(TravelImgFile.buffer, { contentType: TravelImgFile.mimetype });
 
-          // MongoDB에 이미지 이름 저장
-          travel.travelimg = imageName; // 대표 이미지를 단일 문자열로 저장
+            // MongoDB에 이미지 이름 저장
+            travel.travelimg = imageName; // 대표 이미지를 단일 문자열로 저장
 
-          await travel.save();  
+            await travel.save();  
 
-          console.log('여행 대표 사진 변경 성공');
-        } 
-        console.log("img: ", TravelImgFile);
-        // else {
-        //   res.status(400).json({ success: false, message: '이미지가 업로드되지 않았습니다.' });
-        // }
+            console.log('여행 대표 사진 변경 성공');
+            //console.log("img: ", TravelImgFile);
+          } catch (error) {
+            res.status(400).json({ success: false, message: '여행 대표 사진 변경 실패' });
+          }
+        }
   
         await Travel.findByIdAndUpdate(req.params.travelid, {
           title: req.body.title,
@@ -332,20 +333,18 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
         }
         
         console.log('여행 수정 완료');
-        return (travel);
+        return res.status(200).json({ success: true, message: travel});
+
   
       } else {
         console.log('해당 여행을 찾을 수 없습니다.');
-        return ('404: 해당 여행을 찾을 수 없습니다.');
-      }
+        return res.status(404).json({ success : false, message : '해당 여행을 찾을 수 없습니다.' });      }
     } else {
       console.log('로그인이 필요합니다.');
-      return ('401:로그인이 필요합니다.' );
-    }
+      return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });    }
   } catch (err) {
     console.error(err);
-    return ( '500: 서버 오류' );
-  }
+    return res.status(500).json({ success: false, message: '서버 오류' });  }
 });
 
 router.delete('/:travelid', async (req, res) => {
@@ -362,8 +361,9 @@ router.delete('/:travelid', async (req, res) => {
 
         // 여행 수정 권한 판별 : array안에 현 사용자가 있으면 권한O
         if (travel.invited && Array.isArray(travel.invited)) {
+          console.log("권한 O");
           const permission = travel.invited.some(invitedUser => {
-              return invitedUser.user.toString() === user._id.toString();
+              return invitedUser.user.toString() == user._id.toString();
           });
           if (!permission) {
             console.log('여행에 대한 권한이 없습니다.');
@@ -371,21 +371,23 @@ router.delete('/:travelid', async (req, res) => {
           }
         }
 
-        travel.invited = travel.invited.filter(userId => userId.toString() !== user._id.toString());
-        console.log(travel.invited);
+        // 현재 사용자만 여행 invited에서 삭제
+        travel.invited = travel.invited.filter(invite => invite.user.toString() != user._id.toString());
+        console.log("사용자 삭제 후: ", travel.invited);
         await travel.save();
       
-        
-        // MongoDB에서 삭제
-        await Travel.findByIdAndDelete(travel._id);
-        console.log("삭제할 여행: ", travel._id);
-        
+        // 여행에 invited 0명인 경우
+        if (travel.invited.length == 0) {
+          // MongoDB에서 삭제
+          await Travel.findByIdAndDelete(travel._id);
+          console.log("삭제할 여행: ", travel._id);
 
-        // Storage에서 삭제
-        const [files] = await storage.bucket(bucketName).getFiles({
-          prefix: `travel/${travel._id}`,
-        });
-        await Promise.all(files.map(file => file.delete()));
+          // Storage에서 삭제
+          const [files] = await storage.bucket(bucketName).getFiles({
+            prefix: `travel/${travel._id}`,
+          });
+          await Promise.all(files.map(file => file.delete()));
+        }
       
         console.log('여행 삭제 완료');
         return res.status(200).json({ success: true, message: '여행 삭제 완료'});
