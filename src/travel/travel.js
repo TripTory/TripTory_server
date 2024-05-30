@@ -8,6 +8,7 @@ const multer = require('multer');
 
 const { User } = require('../user/user_schema');
 const { Travel } = require('./travel_schema');
+const { Diary } = require('../diary/diary_schema');
 
 const corsOptions = {
   origin: process.env.FRONT_URL, // 허용할 출처
@@ -387,6 +388,19 @@ router.delete('/:travelid', async (req, res) => {
             prefix: `travel/${travel._id}`,
           });
           await Promise.all(files.map(file => file.delete()));
+
+          // 관련된 일기 삭제
+          const diaries = await Diary.find({ travel: travel._id });
+          for (const diary of diaries) {
+            await Diary.findByIdAndDelete(diary._id);
+            console.log("삭제할 일기: ", diary._id);
+
+            // Storage에서 일기 이미지 삭제
+            const [files] = await storage.bucket(bucketName).getFiles({
+              prefix: `diary/${diary._id}`,
+            });
+            await Promise.all(files.map(file => file.delete()));
+          }
         }
       
         console.log('여행 삭제 완료');
