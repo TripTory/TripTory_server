@@ -59,8 +59,8 @@ async function getSignedUrl_user(userId) {
     const [url] = await bucket.file(`user/${userId}`).getSignedUrl(options);
     return url;
   } catch (err) {
-    console.error('이미지 URL 생성 실패:', err);
-    return "";
+    console.error('프로필 URL 생성 실패:', err);
+    return null;
   }
 }
 
@@ -137,8 +137,13 @@ router.get('/:diaryId', async(req, res) => {
     const diary = await Diary.findById(req.params.diaryId);
 
     if(diary){
-
-      const userUrl = await getSignedUrl_user(diary.userId);
+      const users = await User.findById(diary.userId);
+      if (!users.profileimg){
+        userUrl = null;
+        console.log("userUrl: ", userUrl);
+      } else {
+        userUrl = await getSignedUrl_user(diary.userId);
+      }
 
       let diaryImgUrl = []
       if(diary.img){
@@ -151,7 +156,7 @@ router.get('/:diaryId', async(req, res) => {
       const diaryObj = diary.toObject();
       const { img, ...diaryinfo } = diaryObj;
 
-      console.log(diaryinfo);
+      console.log(userUrl);
 
       return res.status(200).json({
         success: true,
