@@ -48,7 +48,7 @@ async function getSignedUrl(travel, res) {
     
   } catch (err) {
       console.error('이미지 URL 생성 실패:', err);
-      return res.status(500).json({ success: false, message: '이미지 URL 생성 실패' });
+      return "이미지 url 생성 실패"
   } 
 }
 
@@ -72,13 +72,17 @@ async function getSignedUrl_user(userId) {
 router.get('/', async (req, res) => {
   console.log("여행 목록 요청");
   try {
-    if (req.session && req.session.userId) {
-      const travels = await Travel.find({ 'invited.user': req.session.userId });
+
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData || !sessionData.userId) {
+      const travels = await Travel.find({ 'invited.user': sessionData.userId });
       
       if (travels.length > 0) { // 여행 목록이 비어있지 않은지 확인
         const travelUrls = [];
         for (const travel of travels) {
-          travelurl = await getSignedUrl(travel, res);
+          const travelurl = await getSignedUrl(travel, res);
           travelUrls.push(travelurl);
         }
         return res.status(200).json({ success: true, travels, travelUrls });

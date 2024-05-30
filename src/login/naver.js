@@ -80,14 +80,13 @@ router.get('/callback', async (req, res) => {
         await user.save(); // 새로운 사용자 정보 저장
 
         req.session.userId = user._id; 
-        res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000 }); // 세션에 쿠키 저장, 유효기간 1일
-
+        res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000, httpOnly: true, secure: true, sameSite: 'none' });
         //res.json({ message: '회원가입 성공', email: naveruserData.email });
         res.redirect(`${process.env.FRONT_URL}/agree`);
       } else {
         // 기존 사용자인 경우 로그인 메시지 응답
         req.session.userId = user._id; 
-        res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000 }); // 세션에 쿠키 저장, 유효기간 1일
+        res.cookie('userSession', JSON.stringify(req.session), { maxAge: 86400 * 1000, httpOnly: true, secure: true, sameSite: 'none' });
 
         await User.findByIdAndUpdate(user._id, {
             oauthAccessToken: accessToken
