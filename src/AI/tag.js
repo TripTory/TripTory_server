@@ -49,8 +49,11 @@ async function getSignedUrl(diaryId, img) {
 router.get('/', async(req, res) => {
   console.log("각 태그별 대표 이미지 요청")
   try {
-    if (req.session && req.session.userId) {
-      const diarys = await Diary.find({ userId: req.session.userId });
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
+      const diarys = await Diary.find({ userId: sessionData.userId });
 
       if(diarys.length <= 0){
         console.log("사용자 일기에 사진이 없습니다.")
@@ -87,8 +90,11 @@ router.get('/', async(req, res) => {
 router.get('/:tagName', async(req, res) => {
   console.log(`${req.params.tagName}에 대한 이미지 요청`)
   try {
-    if (req.session && req.session.userId) {
-      const diarys = await Diary.find({ userId: req.session.userId });
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
+      const diarys = await Diary.find({ userId: sessionData.userId });
 
       if(diarys.length <= 0){
         console.log("사용자 일기에 사진이 없습니다.")

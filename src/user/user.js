@@ -52,9 +52,12 @@ function getSignedUrl(user, res) {
 router.get('/', async (req, res) => {
   console.log("사용자 정보 요청");
   try {
-    if (req.session && req.session.userId) {
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
       // 사용자 ID를 기반으로 사용자 정보를 가져옴
-      const user = await User.findById(req.session.userId);
+      const user = await User.findById(sessionData.userId);
 
       if (user) {
         if (!user.profileimg){
@@ -108,17 +111,16 @@ router.get('/:userid', async (req, res) => {
 router.delete('/logout', async (req, res) => {
   console.log('로그아웃 요청');
   try {
-    if (req.session && req.session.userId){
-      req.session.destroy(err => {
-        if (err) {
-          console.error('세션 제거 실패:', err);
-          return res.status(500).send('세션 제거 실패');
-        } else {
-          console.log('로그아웃 성공');
-          res.clearCookie('userSession'); // 쿠키도 제거합니다.
-          return res.status(200).send('로그아웃 성공');
-        }
-      });
+    const sessionCookie = req.cookies.userSession;
+
+    if (sessionCookie) {
+      // 세션 쿠키가 존재하는 경우
+      res.clearCookie('userSession'); // 세션 쿠키를 제거합니다.
+      req.session = null; // 세션 데이터를 제거합니다.
+      
+      console.log('로그아웃 성공');
+      return res.status(200).send({ success: true, message: '로그아웃 성공' });
+
     } else {
       console.log('로그인이 필요합니다.');
       return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
@@ -134,8 +136,11 @@ router.delete('/logout', async (req, res) => {
 router.put('/', upload.single('profileImg'), async (req, res) => {
   console.log('사용자 정보 수정 요청');
   try {
-    if(req.session && req.session.userId){
-      const user = await User.findById(req.session.userId);
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
+      const user = await User.findById(sessionData.userId);
       if(user){
         console.log('수정할 사용자 ID:', user._id);
 
@@ -187,8 +192,11 @@ router.put('/', upload.single('profileImg'), async (req, res) => {
 router.delete('/', async (req, res) => {
     console.log('사용자 정보 삭제 요청');
     try{
-      if(req.session && req.session.userId){
-        const user = await User.findById(req.session.userId);
+      const sessionCookie = req.cookies.userSession;
+      const sessionData = JSON.parse(sessionCookie);
+  
+      if (sessionData && sessionData.userId) {
+        const user = await User.findById(sessionData.userId);
 
         if(user){
           console.log('삭제할 사용자 ID:', user._id);
@@ -215,16 +223,9 @@ router.delete('/', async (req, res) => {
 
 
           // 세션 및 쿠키 삭제
-          req.session.destroy(err => {
-            if (err) {
-                console.error('세션 제거 실패:', err);
-                return res.status(500).send('세션 제거 실패');
-            } else {
-                console.log('로그아웃 및 사용자 정보 삭제 완료');
-                res.clearCookie('userSession');
-                return res.status(200).json({ success: true, message: '로그아웃 및 사용자 정보 삭제 완료' });
-            }
-          });
+          res.clearCookie('userSession'); // 세션 쿠키를 제거합니다.
+          req.session = null; // 세션 데이터를 제거합니다.
+        
         } else {
           console.log('사용자를 찾을 수 없습니다.');
           return res.status(404).json({ success : false, message : '사용자를 찾을 수 없습니다.' });

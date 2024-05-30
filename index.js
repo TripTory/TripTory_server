@@ -18,7 +18,7 @@ app.use(express.json());
 //app.use(cors());
 // 클라이언트의 출처를 명시적으로 지정하고, 인증 정보를 허용
 const corsOptions = {
-    origin: 'http://localhost:3000', // 클라이언트의 출처
+    origin: process.env.FRONT_URL, // 클라이언트의 출처
     credentials: true // 인증 정보 허용
   };
   app.use(cors(corsOptions));
@@ -28,7 +28,13 @@ app.use(cookieParser());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'default-secret-key',
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 86400 * 1000, // 쿠키 유효기간 1일
+    httpOnly: true, // 클라이언트에서 쿠키를 조작하지 못하게 설정
+    secure: true, // https를 사용하는 경우 true로 설정
+    sameSite: 'none' // 쿠키의 SameSite 속성 설정
+  }
 }));
 
 
@@ -69,4 +75,3 @@ const tagAPI = require("./src/AI/tag");
 app.use('/tag', tagAPI)
   
 app.listen(port, () => console.log(`${port}포트입니다.`));
-  

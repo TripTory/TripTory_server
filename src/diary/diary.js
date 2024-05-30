@@ -67,8 +67,11 @@ async function getSignedUrl_user(userId) {
 router.get('/', async(req, res) => {
   console.log('일기 목록 요청');
   try {
-    if(req.session && req.session.userId){
-      const diarys = await Diary.find({ userId: req.session.userId });
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
+      const diarys = await Diary.find({ userId: sessionData.userId });
 
       if(diarys.length > 0){
 
@@ -177,8 +180,11 @@ router.get('/:diaryId', async(req, res) => {
 router.post('/', upload.array('images', 10), async (req, res) => {
   console.log("일기 생성 요청");
   try {
-    if (req.session && req.session.userId){
-      const user = await User.findById(req.session.userId);
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
+      const user = await User.findById(sessionData.userId);
       const travel = await Travel.findById(req.body.travel);
       if(travel){
         console.log('여행 ID:', travel._id);
@@ -230,13 +236,16 @@ router.post('/', upload.array('images', 10), async (req, res) => {
 router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
   console.log('일기 수정 요청');
   try {
-    if(req.session && req.session.userId){
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
       const diary = await Diary.findById(req.params.diaryId);
 
       if(diary) {
         console.log('수정할 여ᅙᅢᆼ ID:', diary._id);
   
-        if(diary.userId != req.session.userId){
+        if(diary.userId != sessionData.userId){
           console.log('일기에 대한 권한이 없습니다.');
           return res.status(403).json({ success: false, message: '일기에 대한 권한이 없습니다.' });
         }
@@ -309,13 +318,16 @@ router.put('/:diaryId', upload.array('images', 10), async(req,res) => {
 router.delete('/:diaryId', async(req, res) => {
   console.log('일기 삭제 요청');
   try {
-    if (req.session && req.session.userId){
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
       const diary = await Diary.findById(req.params.diaryId);
 
       if(diary){
         console.log('삭제할 여행 ID:', diary._id);
   
-        if (diary.userId != req.session.userId) {
+        if (diary.userId != sessionData.userId) {
           console.log('일기에 대한 권한이 없습니다.');
           return res.status(403).json({ success: false, message: '일기에 대한 권한이 없습니다.' });
         }

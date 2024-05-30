@@ -49,7 +49,7 @@ async function getSignedUrl(travel, res) {
     
   } catch (err) {
       console.error('이미지 URL 생성 실패:', err);
-      return res.status(500).json({ success: false, message: '이미지 URL 생성 실패' });
+      return "이미지 url 생성 실패"
   } 
 }
 
@@ -73,13 +73,17 @@ async function getSignedUrl_user(userId) {
 router.get('/', async (req, res) => {
   console.log("여행 목록 요청");
   try {
-    if (req.session && req.session.userId) {
-      const travels = await Travel.find({ 'invited.user': req.session.userId });
+
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
+      const travels = await Travel.find({ 'invited.user': sessionData.userId });
       
       if (travels.length > 0) { // 여행 목록이 비어있지 않은지 확인
         const travelUrls = [];
         for (const travel of travels) {
-          travelurl = await getSignedUrl(travel, res);
+          const travelurl = await getSignedUrl(travel, res);
           travelUrls.push(travelurl);
         }
         return res.status(200).json({ success: true, travels, travelUrls });
@@ -103,7 +107,7 @@ router.get('/:travelid', async (req, res) => {
   try {
     const travel = await Travel.findById(req.params.travelid);
     if (travel) { // 특정 여행을 찾았는지 확인
-      travelurl = await getSignedUrl(travel, res);  // 여행 대표이미지 url
+      const travelurl = await getSignedUrl(travel, res);  // 여행 대표이미지 url
       
       let invited_profile =[];  // 여행 초대된 사람들 프로필사진
 
@@ -141,8 +145,11 @@ router.get('/:travelid', async (req, res) => {
 router.post('/', upload.single('image'),async (req, res) => {
   console.log("여행 생성 요청");
   try {
-    if(req.session && req.session.userId){
-      const user = await User.findById(req.session.userId);
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
+      const user = await User.findById(sessionData.userId);
       if (user) {
         console.log('사용자 ID:', user._id);
   
@@ -210,14 +217,17 @@ router.post('/', upload.single('image'),async (req, res) => {
 router.post('/invite', async (req, res) => {
   console.log("여행 초대 요청");
   try {
-    if (req.session && req.session.userId){
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
 
       const { ivtoken } = req.body;
       if (!ivtoken) {
         return res.status(400).json({ success: false, message: 'ivtoken이 필요합니다.' });
       }
 
-      const user = await User.findById(req.session.userId);
+      const user = await User.findById(sessionData.userId);
       const travel = await Travel.findOne({ ivtoken: req.body.ivtoken });      
       if (travel){
         console.log('여행 ID:', travel._id);
@@ -248,8 +258,11 @@ router.post('/invite', async (req, res) => {
 router.put('/invite', async (req, res) => {
   console.log("여행 초대 수락");
   try {
-    if (req.session && req.session.userId){
-      const user = await User.findById(req.session.userId);
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
+      const user = await User.findById(sessionData.userId);
       const travel = await Travel.findById(req.body.travelid); // 여행 토큰으로 여행을 검색
       if (travel) {
         console.log('여행 ID:', travel._id);
@@ -283,11 +296,14 @@ router.put('/invite', async (req, res) => {
 router.put('/:travelid', upload.single('image'), async (req, res) => {
   console.log('여행 수정 요청');
   try {
-    if (req.session && req.session.userId){
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
       const travel = await Travel.findById(req.params.travelid);
 
       if(travel){
-        const user = await User.findById(req.session.userId);
+        const user = await User.findById(sessionData.userId);
 
         if (travel.invited && Array.isArray(travel.invited)) {
           const permission = travel.invited.some(invitedUser => {
@@ -351,12 +367,15 @@ router.put('/:travelid', upload.single('image'), async (req, res) => {
 router.delete('/:travelid', async (req, res) => {
   console.log('여행 삭제 요청');
   try{
-    if (req.session && req.session.userId){
+    const sessionCookie = req.cookies.userSession;
+    const sessionData = JSON.parse(sessionCookie);
+
+    if (sessionData && sessionData.userId) {
       const travel = await Travel.findById(req.params.travelid);
 
       if(travel){
         console.log('삭제할 여행 ID:', travel._id);
-        const user = await User.findById(req.session.userId);
+        const user = await User.findById(sessionData.userId);
         console.log('수정할 user ID:', user._id);
         console.log('유저들: ', travel.invited);
 
